@@ -71,9 +71,14 @@ def create_app() -> FastAPI:
     )
 
     # Configure CORS for local development
+
+    origins = [
+        "http://localhost:3000",
+        "https://shiny-giggle-7vvjp5gv747xcrjww-3000.app.github.dev"
+    ]
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+        allow_origins=origins,
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allow_headers=["*"],
