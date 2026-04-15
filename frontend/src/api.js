@@ -59,6 +59,16 @@ export const authApi = {
 };
 
 // -----------------------------
+// Products (cross-merchant search)
+// -----------------------------
+export const productsApi = {
+  search: async (query) => {
+    const { data } = await api.get('/products/search', { params: { q: query } });
+    return data; // { query, count, results: [...] }
+  },
+};
+
+// -----------------------------
 // Deals
 // -----------------------------
 export const dealsApi = {

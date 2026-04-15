@@ -15,6 +15,7 @@ from app.core.config import get_settings
 from app.db.database import create_tables, get_database
 from app.routers.auth import router as auth_router
 from app.routers.deals import router as deals_router
+from app.routers.products import router as products_router
 
 # Configure structured logging
 structlog.configure(
@@ -99,6 +100,11 @@ def create_app() -> FastAPI:
         deals_router,
         prefix="/api/v1/deals",
         tags=["deals"]
+    )
+    app.include_router(
+        products_router,
+        prefix="/api/v1/products",
+        tags=["products"]
     )
 
     @app.get("/", response_class=JSONResponse)

@@ -7,6 +7,7 @@ import DealList from './components/deals/DealList';
 import DealForm from './components/deals/DealForm';
 import DealDetails from './components/deals/DealDetails';
 import DealFilters from './components/deals/DealFilters';
+import SearchView from './components/search/SearchView';
 import AuthScreen from './components/auth/AuthScreen';
 import { authApi, dealsApi } from './api';
 import { useAuthStore } from './stores/authStore';
@@ -33,6 +34,7 @@ function AuthenticatedApp({ user, onLogout }) {
     if (currentView === 'deals' || currentView === 'dashboard') {
       fetchAllDeals();
     }
+    // Search view manages its own data — no prefetch here.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentView]);
 
@@ -169,6 +171,16 @@ function AuthenticatedApp({ user, onLogout }) {
               Dashboard
             </button>
             <button
+              onClick={() => handleNavigation('search')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                currentView === 'search'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Compare Prices
+            </button>
+            <button
               onClick={() => handleNavigation('deals')}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 currentView === 'deals' || currentView === 'add-deal'
@@ -185,6 +197,8 @@ function AuthenticatedApp({ user, onLogout }) {
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           {currentView === 'dashboard' && <Dashboard deals={allDeals} />}
+
+          {currentView === 'search' && <SearchView />}
 
           {currentView === 'deals' && (
             <div className="space-y-6">

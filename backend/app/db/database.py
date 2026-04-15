@@ -61,8 +61,11 @@ async def create_tables() -> None:
     try:
         async with engine.begin() as conn:
             # Import models to register them with SQLAlchemy's metadata
-            from app.db.models.deals import Deal  # noqa: F401
-            from app.db.models.user import User   # noqa: F401
+            from app.db.models.deals import Deal              # noqa: F401
+            from app.db.models.user import User               # noqa: F401
+            from app.db.models.merchant import Merchant       # noqa: F401
+            from app.db.models.product import Product         # noqa: F401
+            from app.db.models.price_snapshot import PriceSnapshot  # noqa: F401
 
             # Create all tables
             await conn.run_sync(Base.metadata.create_all)
