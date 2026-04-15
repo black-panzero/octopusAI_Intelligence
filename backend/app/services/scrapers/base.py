@@ -35,6 +35,10 @@ class ScrapedOffer:
     available: bool = True
     brand: Optional[str] = None
     category: Optional[str] = None
+    rating: Optional[float] = None
+    review_count: Optional[int] = None
+    size: Optional[str] = None
+    specs: Optional[dict] = None
     extra: dict = field(default_factory=dict)
 
 

@@ -68,6 +68,7 @@ async def create_tables() -> None:
             from app.db.models.price_snapshot import PriceSnapshot  # noqa: F401
             from app.db.models.cart import Cart, CartItem         # noqa: F401
             from app.db.models.price_rule import PriceRule        # noqa: F401
+            from app.db.models.conversation import Conversation, ChatTurn  # noqa: F401
 
             # Create all tables
             await conn.run_sync(Base.metadata.create_all)

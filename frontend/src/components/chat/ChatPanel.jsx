@@ -1,9 +1,12 @@
 // src/components/chat/ChatPanel.jsx
 // Reusable chat body — messages + composer — shared by the full-page
-// ChatView and the floating widget so they always show the same state.
+// ChatView and the floating widget. Optionally renders the conversation
+// sidebar (left) and the intelligence panel (right) in wider layouts.
 import React, { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useChatStore } from '../../stores/chatStore';
+import ConversationSidebar from './ConversationSidebar';
+import IntelligencePanel from './IntelligencePanel';
 import Markdown from './Markdown';
 import ToolResultCard from './ToolResultCard';
 
@@ -15,7 +18,11 @@ const SUGGESTIONS = [
   'What is in my cart right now?',
 ];
 
-const ChatPanel = ({ compact = false }) => {
+const ChatPanel = ({
+  compact = false,
+  showSidebar = false,
+  showIntelligence = false,
+}) => {
   const messages = useChatStore((s) => s.messages);
   const invocationsByIdx = useChatStore((s) => s.invocationsByIdx);
   const loading = useChatStore((s) => s.loading);
@@ -23,21 +30,23 @@ const ChatPanel = ({ compact = false }) => {
   const lastError = useChatStore((s) => s.lastError);
   const send = useChatStore((s) => s.send);
   const checkStatus = useChatStore((s) => s.checkStatus);
+  const conversationTitle = useChatStore((s) => s.conversationTitle);
 
   const [input, setInput] = useState('');
+  const [intelCollapsed, setIntelCollapsed] = useState(true);
   const scrollRef = useRef(null);
 
-  useEffect(() => {
-    if (status === null) checkStatus();
-  }, [status, checkStatus]);
-
-  useEffect(() => {
-    if (lastError) toast.error(lastError);
-  }, [lastError]);
-
+  useEffect(() => { if (status === null) checkStatus(); }, [status, checkStatus]);
+  useEffect(() => { if (lastError) toast.error(lastError); }, [lastError]);
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages, loading]);
+
+  const hasActivity = messages.some((m) => m.role === 'user' || m.content);
+  // Surface intelligence automatically once the user has said anything.
+  useEffect(() => {
+    if (hasActivity && intelCollapsed) setIntelCollapsed(false);
+  }, [hasActivity]);  // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -53,11 +62,17 @@ const ChatPanel = ({ compact = false }) => {
     (m) => m.role === 'user' || (m.role === 'assistant' && (m.content || m.tool_calls)),
   );
 
-  return (
+  const stream = (
     <div className="flex flex-col h-full min-h-0">
       {status && !status.configured && (
         <div className="bg-amber-50 border border-amber-200 rounded-md p-3 text-xs text-amber-800 mx-3 mt-3">
           AI not configured. Set <code>LLM_API_KEY</code> in backend/.env and restart.
+        </div>
+      )}
+
+      {!compact && conversationTitle && hasActivity && (
+        <div className="px-4 pt-3 pb-1 text-xs text-gray-500 truncate">
+          {conversationTitle}
         </div>
       )}
 
@@ -104,12 +119,7 @@ const ChatPanel = ({ compact = false }) => {
                   </div>
                 )}
                 {invocations.map((inv) => (
-                  <div key={inv.id} className="space-y-0.5">
-                    <p className="text-[10px] uppercase tracking-wide text-fuchsia-600 font-semibold">
-                      {inv.tool}
-                    </p>
-                    <ToolResultCard invocation={inv} />
-                  </div>
+                  <ToolResultCard key={inv.id} invocation={inv} />
                 ))}
               </div>
             </div>
@@ -147,6 +157,33 @@ const ChatPanel = ({ compact = false }) => {
           Send
         </button>
       </form>
+    </div>
+  );
+
+  // No layout wrappers for mini / floating mini — caller sizes us.
+  if (!showSidebar && !showIntelligence) return stream;
+
+  const intelWidth = intelCollapsed ? 52 : 288;
+
+  return (
+    <div className="flex h-full min-h-0">
+      {showSidebar && (
+        <div className="w-56 flex-shrink-0 hidden md:block">
+          <ConversationSidebar />
+        </div>
+      )}
+      <div className="flex-1 min-w-0 flex flex-col">{stream}</div>
+      {showIntelligence && (
+        <div
+          className="flex-shrink-0 transition-[width] duration-200 ease-out hidden lg:block"
+          style={{ width: intelWidth }}
+        >
+          <IntelligencePanel
+            collapsed={intelCollapsed}
+            onToggle={() => setIntelCollapsed((v) => !v)}
+          />
+        </div>
+      )}
     </div>
   );
 };

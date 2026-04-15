@@ -144,7 +144,11 @@ const FloatingChatWidget = ({ hidden = false }) => {
             onClose={() => setMode('closed')}
           />
           <div className="flex-1 min-h-0">
-            <ChatPanel compact={mode === 'mini'} />
+            <ChatPanel
+              compact={mode === 'mini'}
+              showSidebar={mode === 'full'}
+              showIntelligence={mode === 'full'}
+            />
           </div>
         </motion.div>
       )}

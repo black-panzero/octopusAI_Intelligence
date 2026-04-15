@@ -1,6 +1,6 @@
 // src/components/chat/ChatView.jsx
-// Full-page Chat tab. All conversation state lives in the chat store so
-// this view and the floating widget stay in sync.
+// Full-page Chat tab. 3-column layout: conversations sidebar, messages,
+// intelligence panel. All state lives in the chat store.
 import React from 'react';
 import ChatPanel from './ChatPanel';
 
@@ -11,12 +11,12 @@ const ChatView = () => {
         <h1 className="text-2xl font-bold mb-1">Chat with SmartBuy</h1>
         <p className="text-pink-100 text-sm">
           Ask for prices, comparisons, or tell it to add things to your cart.
-          Everything you do here also happens in the rest of the app.
+          Conversations are saved — pick one up again from the left.
         </p>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-lg h-[60vh] overflow-hidden">
-        <ChatPanel />
+      <div className="bg-white border border-gray-200 rounded-lg h-[70vh] overflow-hidden">
+        <ChatPanel showSidebar showIntelligence />
       </div>
     </div>
   );

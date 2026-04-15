@@ -90,8 +90,13 @@ export const recommendationsApi = {
 // -----------------------------
 export const chatApi = {
   status: async () => (await api.get('/chat/status')).data,
-  send: async (messages) =>
-    (await api.post('/chat/', { messages })).data,
+  send: async (messages, { conversation_id = null } = {}) =>
+    (await api.post('/chat/', { messages, conversation_id })).data,
+  listConversations: async () => (await api.get('/chat/conversations')).data,
+  getConversation: async (id) => (await api.get(`/chat/conversations/${id}`)).data,
+  deleteConversation: async (id) => (await api.delete(`/chat/conversations/${id}`)).data,
+  renameConversation: async (id, title) =>
+    (await api.patch(`/chat/conversations/${id}`, { title })).data,
 };
 
 // -----------------------------

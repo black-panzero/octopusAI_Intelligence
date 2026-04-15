@@ -58,12 +58,14 @@ class NaivasScraper(BaseScraper):
                 price = parse_price(str(p.get("price", "")))
                 if price is None or price <= 0:
                     continue
+                # Shopify appends ?v=... for cache-busting; pick a sensible size.
+                image = p.get("image") or (p.get("featured_image") or {}).get("url")
                 offers.append(
                     ScrapedOffer(
                         product_name=p.get("title", "").strip(),
                         price=price,
                         url=self.resolve(p.get("url")),
-                        image_url=p.get("image"),
+                        image_url=image,
                         brand=p.get("vendor"),
                         category=p.get("product_type") or None,
                         available=bool(p.get("available", True)),
