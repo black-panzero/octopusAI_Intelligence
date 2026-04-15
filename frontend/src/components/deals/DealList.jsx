@@ -1,8 +1,43 @@
 // src/components/deals/DealList.jsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import DealCard from './DealCard';
+import { dealsApi } from '../../api'; // ✅ updated: import the dealsApi
 
-const DealList = ({ deals, loading, error, onDealSelect }) => {
+const DealList = () => {
+  // ✅ updated: local state for self-contained fetching
+  const [deals, setDeals] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // ✅ updated: fetch deals on mount
+  useEffect(() => {
+    const fetchDeals = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const data = await dealsApi.getAllDeals();
+        console.log("🔥 Raw deals API response:", data); // 👈 add this line
+
+
+        // ✅ handle different API response shapes
+        if (Array.isArray(data.deals)) {
+          setDeals(data.deals);
+        } else {
+          setDeals([]);
+        }
+      } catch (err) {
+        console.error('Error fetching deals:', err);
+        setError('Failed to load deals');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDeals();
+  }, []);
+
+  // Show loading skeletons if loading
   if (loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -31,6 +66,7 @@ const DealList = ({ deals, loading, error, onDealSelect }) => {
     );
   }
 
+  // Show error if any
   if (error) {
     return (
       <div className="text-center py-12">
@@ -50,6 +86,7 @@ const DealList = ({ deals, loading, error, onDealSelect }) => {
   // Ensure deals is always an array
   const dealArray = Array.isArray(deals) ? deals : [];
 
+  // Show empty state if no deals
   if (dealArray.length === 0) {
     return (
       <div className="text-center py-12">
@@ -79,7 +116,7 @@ const DealList = ({ deals, loading, error, onDealSelect }) => {
           <DealCard
             key={deal.id}
             deal={deal}
-            onViewDetails={onDealSelect}
+            onViewDetails={(d) => console.log('Selected deal:', d)} // ✅ updated: local handler
           />
         ))}
       </div>

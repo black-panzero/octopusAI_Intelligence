@@ -13,29 +13,43 @@ import './App.css';
 function App() {
   // State management
   const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard', 'deals', 'add-deal'
-  const [deals, setDeals] = useState([]);
+
+  // ✅ unchanged names, still drive Dashboard count + Deals view
+  const [allDeals, setAllDeals] = useState([]);
   const [filteredDeals, setFilteredDeals] = useState([]);
+
   const [selectedDeal, setSelectedDeal] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showDealDetails, setShowDealDetails] = useState(false);
 
-  // Load deals on component mount and when view changes to deals
+  // 🔧 small util to normalize API response shape
+  // (some backends return { deals: [...] }, others { results: [...] })
+  const parseDealsResponse = (data) => {
+    if (Array.isArray(data?.results)) return data.results;
+    if (Array.isArray(data?.deals)) return data.deals;
+    return Array.isArray(data) ? data : [];
+  };
+
+  // Load deals on component mount and when view changes
   useEffect(() => {
     if (currentView === 'deals' || currentView === 'dashboard') {
-      fetchAllDeals();
+      fetchAllDeals(); // no filters by default
     }
   }, [currentView]);
 
-  // Fetch all deals from API
+  // ✅ unchanged public loader for initial pages (dashboard/deals)
   const fetchAllDeals = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await dealsApi.getAllDeals();
-      setDeals(data);
-      setFilteredDeals(data);
+
+      const data = await dealsApi.getAllDeals({ page: 1, size: 20 });
+      const dealsArray = parseDealsResponse(data);
+
+      setAllDeals(dealsArray);
+      setFilteredDeals(dealsArray);
     } catch (err) {
       setError('Failed to fetch deals. Please check if the backend server is running.');
       console.error('Error fetching deals:', err);
@@ -44,34 +58,46 @@ function App() {
     }
   };
 
+  // ✨ NEW: a “raw” fetcher used by filters to avoid intermediate state flicker
+  // It returns the fetched list without mutating filteredDeals mid-flight.
+  const fetchDealsForFilters = async (queryParams) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const data = await dealsApi.getAllDeals({
+        page: 1,
+        size: 20,
+        ...queryParams,
+      });
+      return parseDealsResponse(data);
+    } catch (err) {
+      setError('Failed to fetch deals. Please check if the backend server is running.');
+      console.error('Error fetching deals (filters):', err);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle create deal
   const handleCreateDeal = async (dealData) => {
     try {
       setLoading(true);
 
       const newDeal = await dealsApi.createDeal(dealData);
 
-      // sanity check: make sure we actually got a deal-like object
       if (!newDeal || typeof newDeal !== 'object') {
         throw new Error('Unexpected API payload for createDeal');
       }
 
-      // guard #1: deals must be an array
-      const safeDeals = Array.isArray(deals) ? deals : [];
-      const updatedDeals = [newDeal, ...safeDeals];
-
-      setDeals(updatedDeals);
-
-      // guard #2: setFilteredDeals must be callable
-      if (typeof setFilteredDeals === 'function') {
-        setFilteredDeals(updatedDeals);
-      } else {
-        console.warn('setFilteredDeals is not available; skipping filtered list update');
-      }
+      const updatedDeals = [newDeal, ...allDeals];
+      setAllDeals(updatedDeals);
+      setFilteredDeals(updatedDeals);
 
       setShowAddForm(false);
       setCurrentView('deals');
       toast.success('Deal created successfully!', { duration: 5000 });
-      //alert('Deal created successfully!');
     } catch (err) {
       console.error('Error creating deal:', err);
       alert('Failed to create deal. Please try again.');
@@ -80,52 +106,80 @@ function App() {
     }
   };
 
+  // ✨ UPDATED: backend-powered filtering + local post-filters
+  const handleFiltersChange = async (filters) => {
+    // ----------------------------
+    // Build backend params only for what the API supports
+    // ----------------------------
+    const backendParams = {};
+    if (filters.merchant) backendParams.merchant = filters.merchant;
+    if (filters.category) backendParams.category = filters.category;
 
-  // Handle filters change
-  const handleFiltersChange = (filters) => {
-    let filtered = [...deals];
+    // ✅ Only send active_only when user selects "Active Only"
+    //    (sending active_only=false means “no active filter”, not “inactive only”)
+    if (filters.isActive === 'true') {
+      backendParams.active_only = true;
+    }
 
-    // Apply search filter
+    // ✅ If user selects "Inactive Only", ask backend to also include expired items,
+    //    then we’ll filter locally `is_active === false`
+    const wantsInactiveOnly = filters.isActive === 'false';
+    if (wantsInactiveOnly) {
+      backendParams.include_expired = true;
+    }
+
+    // ----------------------------
+    // Fetch using backend params
+    // ----------------------------
+    const fetched = await fetchDealsForFilters(backendParams);
+
+    // Keep master list in sync for Dashboard and badge count
+    setAllDeals(fetched);
+
+    // ----------------------------
+    // Apply local-only filters (search, min/max price, inactive-only)
+    // ----------------------------
+    let final = [...fetched];
+
+    // Search (no backend param was provided in your spec)
     if (filters.search) {
-      filtered = filtered.filter(deal =>
-        deal.product_name.toLowerCase().includes(filters.search.toLowerCase()) ||
-        deal.description?.toLowerCase().includes(filters.search.toLowerCase())
+      const term = filters.search.toLowerCase();
+      final = final.filter(
+        (deal) =>
+          deal.product_name?.toLowerCase().includes(term) ||
+          deal.description?.toLowerCase().includes(term)
       );
     }
 
-    // Apply merchant filter
-    if (filters.merchant) {
-      filtered = filtered.filter(deal => deal.merchant === filters.merchant);
-    }
-
-    // Apply category filter
-    if (filters.category) {
-      filtered = filtered.filter(deal => deal.category === filters.category);
-    }
-
-    // Apply price range filters
+    // Price range (no backend support in your spec)
     if (filters.minPrice) {
-      filtered = filtered.filter(deal => deal.price >= parseFloat(filters.minPrice));
+      const min = parseFloat(filters.minPrice);
+      if (!Number.isNaN(min)) {
+        final = final.filter((deal) => Number(deal.price) >= min);
+      }
     }
     if (filters.maxPrice) {
-      filtered = filtered.filter(deal => deal.price <= parseFloat(filters.maxPrice));
+      const max = parseFloat(filters.maxPrice);
+      if (!Number.isNaN(max)) {
+        final = final.filter((deal) => Number(deal.price) <= max);
+      }
     }
 
-    // Apply status filter
-    if (filters.isActive !== 'all') {
-      filtered = filtered.filter(deal => deal.is_active === (filters.isActive === 'true'));
+    // Inactive only (no backend param in your spec)
+    if (wantsInactiveOnly) {
+      final = final.filter((deal) => deal.is_active === false);
     }
 
-    setFilteredDeals(filtered);
+    setFilteredDeals(final);
   };
 
-  // Handle deal selection for details view
+  // Handle deal selection
   const handleDealSelect = (deal) => {
     setSelectedDeal(deal);
     setShowDealDetails(true);
   };
 
-  // Navigation handlers
+  // Navigation
   const handleNavigation = (view) => {
     setCurrentView(view);
     setShowAddForm(false);
@@ -174,7 +228,8 @@ function App() {
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              Deals ({deals.length})
+              {/* count from allDeals (unchanged) */}
+              Deals ({allDeals.length})
             </button>
           </div>
         </div>
@@ -186,7 +241,7 @@ function App() {
           
           {/* Dashboard View */}
           {currentView === 'dashboard' && (
-            <Dashboard />
+            <Dashboard deals={allDeals} />
           )}
 
           {/* Deals View */}
@@ -219,7 +274,7 @@ function App() {
             </div>
           )}
 
-          {/* Add Deal Form View */}
+          {/* Add Deal Form */}
           {currentView === 'add-deal' && showAddForm && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
@@ -253,7 +308,7 @@ function App() {
         onClose={handleCloseDealDetails}
       />
 
-      {/* Error Toast (Simple implementation) */}
+      {/* Error Toast */}
       {error && (
         <div className="fixed bottom-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg">
           <div className="flex items-center">
@@ -273,9 +328,7 @@ function App() {
         </div>
       )}
 
-      {/* ✅ React Hot Toast Toaster (must be here) */}
       <Toaster position="top-right" reverseOrder={false} />
-      
     </div>
   );
 }
