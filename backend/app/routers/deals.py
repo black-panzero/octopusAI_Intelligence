@@ -306,25 +306,21 @@ async def get_deal_stats(
     """
     try:
         logger.debug("Retrieving deal statistics")
-        
-        active_count = await deal_service.get_active_deals_count()
-        
-        # Get total count including inactive deals
-        all_deals, total_count = await deal_service.get_deals(
-            skip=0,
-            limit=1,
-            active_only=False,
-            include_expired=True
+
+        stats = await deal_service.get_summary_stats()
+
+        # Serialize recent deals for JSON response
+        recent = [DealResponse.model_validate(d).model_dump() for d in stats["recent_deals"]]
+        response = {**stats, "recent_deals": recent}
+
+        logger.info(
+            "Deal statistics retrieved successfully",
+            total=response["total_deals"],
+            active=response["active_deals"],
+            merchants=response["unique_merchants"],
+            categories=response["unique_categories"],
         )
-        
-        stats = {
-            "active_deals": active_count,
-            "total_deals": total_count,
-            "inactive_deals": total_count - active_count
-        }
-        
-        logger.info("Deal statistics retrieved successfully", **stats)
-        return stats
+        return response
         
     except Exception as e:
         logger.error("Failed to retrieve deal statistics", error=str(e))

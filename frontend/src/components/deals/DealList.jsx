@@ -1,43 +1,13 @@
 // src/components/deals/DealList.jsx
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import DealCard from './DealCard';
-import { dealsApi } from '../../api'; // ✅ updated: import the dealsApi
 
-const DealList = () => {
-  // ✅ updated: local state for self-contained fetching
-  const [deals, setDeals] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  // ✅ updated: fetch deals on mount
-  useEffect(() => {
-    const fetchDeals = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const data = await dealsApi.getAllDeals();
-        console.log("🔥 Raw deals API response:", data); // 👈 add this line
-
-
-        // ✅ handle different API response shapes
-        if (Array.isArray(data.deals)) {
-          setDeals(data.deals);
-        } else {
-          setDeals([]);
-        }
-      } catch (err) {
-        console.error('Error fetching deals:', err);
-        setError('Failed to load deals');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDeals();
-  }, []);
-
-  // Show loading skeletons if loading
+/**
+ * Presentational list. State (fetch, filters) lives in App.jsx — this component
+ * only renders what it's given. Fixes the bug where the list ignored parent props
+ * and re-fetched, breaking filters + search + details modal.
+ */
+const DealList = ({ deals = [], loading = false, error = null, onDealSelect }) => {
   if (loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -66,7 +36,6 @@ const DealList = () => {
     );
   }
 
-  // Show error if any
   if (error) {
     return (
       <div className="text-center py-12">
@@ -83,10 +52,8 @@ const DealList = () => {
     );
   }
 
-  // Ensure deals is always an array
   const dealArray = Array.isArray(deals) ? deals : [];
 
-  // Show empty state if no deals
   if (dealArray.length === 0) {
     return (
       <div className="text-center py-12">
@@ -97,7 +64,9 @@ const DealList = () => {
             </svg>
           </div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">No Deals Found</h3>
-          <p className="text-gray-600">There are no deals available at the moment. Try creating a new deal or adjusting your filters.</p>
+          <p className="text-gray-600">
+            No deals match your filters. Try clearing them or add a new deal.
+          </p>
         </div>
       </div>
     );
@@ -110,13 +79,13 @@ const DealList = () => {
           {dealArray.length} {dealArray.length === 1 ? 'Deal' : 'Deals'} Found
         </h2>
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {dealArray.map((deal) => (
           <DealCard
             key={deal.id}
             deal={deal}
-            onViewDetails={(d) => console.log('Selected deal:', d)} // ✅ updated: local handler
+            onViewDetails={onDealSelect}
           />
         ))}
       </div>

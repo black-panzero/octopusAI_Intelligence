@@ -271,6 +271,55 @@ class DealService:
             logger.error("Failed to get active deals count", error=str(e))
             raise
 
+    async def get_summary_stats(self, recent_limit: int = 5) -> dict:
+        """
+        Get aggregated deal statistics for the dashboard.
+
+        Returns:
+            dict with total_deals, active_deals, inactive_deals,
+            unique_merchants, unique_categories, recent_deals.
+        """
+        try:
+            total = (await self.db.execute(select(func.count(Deal.id)))).scalar() or 0
+            active = (
+                await self.db.execute(
+                    select(func.count(Deal.id)).where(Deal.is_active == True)  # noqa: E712
+                )
+            ).scalar() or 0
+
+            merchants = (
+                await self.db.execute(
+                    select(func.count(func.distinct(Deal.merchant)))
+                )
+            ).scalar() or 0
+            categories = (
+                await self.db.execute(
+                    select(func.count(func.distinct(Deal.category))).where(
+                        Deal.category.is_not(None)
+                    )
+                )
+            ).scalar() or 0
+
+            recent_stmt = (
+                select(Deal)
+                .where(Deal.is_active == True)  # noqa: E712
+                .order_by(desc(Deal.created_at))
+                .limit(recent_limit)
+            )
+            recent = (await self.db.execute(recent_stmt)).scalars().all()
+
+            return {
+                "total_deals": total,
+                "active_deals": active,
+                "inactive_deals": max(total - active, 0),
+                "unique_merchants": merchants,
+                "unique_categories": categories,
+                "recent_deals": recent,
+            }
+        except Exception as e:
+            logger.error("Failed to build summary stats", error=str(e))
+            raise
+
     async def get_deals_by_merchant(self, merchant: str, limit: int = 10) -> Sequence[Deal]:
         """Get deals by merchant name."""
         try:

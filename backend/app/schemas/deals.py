@@ -5,7 +5,7 @@ Pydantic schemas for Deal data validation and serialization
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field, ConfigDict, validator
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 
 class DealBase(BaseModel):
@@ -66,17 +66,22 @@ class DealBase(BaseModel):
         description="Original URL where the deal was found"
     )
     
-    @validator('discount')
+    @field_validator('discount')
+    @classmethod
     def validate_discount(cls, v):
         """Validate discount value."""
         if v is not None and v < 0:
             raise ValueError('Discount cannot be negative')
         return v
-    
-    @validator('expiry')
+
+    @field_validator('expiry')
+    @classmethod
     def validate_expiry_date(cls, v):
-        """Validate expiry date is not in the past."""
-        if v is not None and v < datetime.now():
+        """Validate expiry date is not in the past (tz-safe)."""
+        if v is None:
+            return v
+        now = datetime.now(v.tzinfo) if v.tzinfo else datetime.now()
+        if v < now:
             raise ValueError('Expiry date cannot be in the past')
         return v
 
