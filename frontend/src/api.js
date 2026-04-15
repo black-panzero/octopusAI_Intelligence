@@ -86,6 +86,31 @@ export const recommendationsApi = {
 };
 
 // -----------------------------
+// Shopping lists / wishlists
+// -----------------------------
+export const shoppingListsApi = {
+  list: async ({ kind = null, include_archived = false } = {}) => {
+    const params = { include_archived };
+    if (kind) params.kind = kind;
+    return (await api.get('/shopping-lists/', { params })).data;
+  },
+  get: async (id) => (await api.get(`/shopping-lists/${id}`)).data,
+  create: async (payload) =>
+    (await api.post('/shopping-lists/', payload)).data,
+  patch: async (id, patch) =>
+    (await api.patch(`/shopping-lists/${id}`, patch)).data,
+  delete: async (id) => (await api.delete(`/shopping-lists/${id}`)).data,
+  addItem: async (id, payload) =>
+    (await api.post(`/shopping-lists/${id}/items`, payload)).data,
+  updateItem: async (id, itemId, patch) =>
+    (await api.patch(`/shopping-lists/${id}/items/${itemId}`, patch)).data,
+  removeItem: async (id, itemId) =>
+    (await api.delete(`/shopping-lists/${id}/items/${itemId}`)).data,
+  sendToCart: async (id) =>
+    (await api.post(`/shopping-lists/${id}/send-to-cart`)).data,
+};
+
+// -----------------------------
 // Chat / AI assistant
 // -----------------------------
 export const chatApi = {

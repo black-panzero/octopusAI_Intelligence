@@ -20,6 +20,7 @@ from app.routers.deals import router as deals_router
 from app.routers.products import router as products_router
 from app.routers.recommendations import router as recommendations_router
 from app.routers.rules import router as rules_router
+from app.routers.shopping_lists import router as shopping_lists_router
 
 # Configure structured logging
 structlog.configure(
@@ -129,6 +130,11 @@ def create_app() -> FastAPI:
         recommendations_router,
         prefix="/api/v1/recommendations",
         tags=["recommendations"]
+    )
+    app.include_router(
+        shopping_lists_router,
+        prefix="/api/v1/shopping-lists",
+        tags=["shopping-lists"]
     )
 
     @app.get("/", response_class=JSONResponse)

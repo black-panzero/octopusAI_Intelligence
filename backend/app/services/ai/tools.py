@@ -16,6 +16,7 @@ from app.services.cart_service import CartService
 from app.services.catalog_service import CatalogService
 from app.services.rules_service import RulesService
 from app.services.scraping_service import ScrapingService
+from app.services.shopping_list_service import ShoppingListService
 
 logger = structlog.get_logger(__name__)
 
@@ -156,6 +157,209 @@ TOOL_SCHEMAS: list[dict] = [
             },
         },
     },
+    # --- Cart CRUD (beyond add_to_cart) -----------------------------------
+    {
+        "type": "function",
+        "function": {
+            "name": "remove_cart_item",
+            "description": "Remove a single item from the user's cart by its cart item id.",
+            "parameters": {
+                "type": "object",
+                "properties": {"item_id": {"type": "integer"}},
+                "required": ["item_id"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "update_cart_quantity",
+            "description": (
+                "Set the quantity for a cart item. Setting it to 0 removes "
+                "the item."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "item_id": {"type": "integer"},
+                    "quantity": {"type": "integer", "minimum": 0},
+                },
+                "required": ["item_id", "quantity"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "clear_cart",
+            "description": "Empty the user's cart entirely. Ask for confirmation before calling.",
+            "parameters": {"type": "object", "properties": {}},
+        },
+    },
+    # --- Shopping lists ----------------------------------------------------
+    {
+        "type": "function",
+        "function": {
+            "name": "list_shopping_lists",
+            "description": (
+                "Return the user's saved shopping lists and wishlists with their items. "
+                "kind filters to 'shopping' or 'wishlist' when provided."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "kind": {"type": "string", "enum": ["shopping", "wishlist"]},
+                    "include_archived": {"type": "boolean", "default": False},
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_shopping_list",
+            "description": "Fetch a single shopping list with its items and current best prices.",
+            "parameters": {
+                "type": "object",
+                "properties": {"list_id": {"type": "integer"}},
+                "required": ["list_id"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "create_shopping_list",
+            "description": (
+                "Create a new shopping list or wishlist. Each item can be a "
+                "free-text note (e.g. '2kg rice') or a catalog product_id. "
+                "After creation, call send_shopping_list_to_cart(list_id) if "
+                "the user wants to move everything to the cart."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "title": {"type": "string"},
+                    "kind": {"type": "string", "enum": ["shopping", "wishlist"], "default": "shopping"},
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "note": {"type": "string"},
+                                "product_id": {"type": "integer"},
+                                "quantity": {"type": "integer", "minimum": 1, "default": 1},
+                            },
+                        },
+                    },
+                },
+                "required": ["title"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "update_shopping_list",
+            "description": "Rename, change kind, or archive a shopping list.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "list_id": {"type": "integer"},
+                    "title": {"type": "string"},
+                    "kind": {"type": "string", "enum": ["shopping", "wishlist"]},
+                    "is_archived": {"type": "boolean"},
+                },
+                "required": ["list_id"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "delete_shopping_list",
+            "description": "Delete a shopping list and its items permanently.",
+            "parameters": {
+                "type": "object",
+                "properties": {"list_id": {"type": "integer"}},
+                "required": ["list_id"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "add_shopping_list_item",
+            "description": (
+                "Append an item to a list. Provide either a note (free text) "
+                "or a product_id from search_products."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "list_id": {"type": "integer"},
+                    "note": {"type": "string"},
+                    "product_id": {"type": "integer"},
+                    "quantity": {"type": "integer", "minimum": 1, "default": 1},
+                },
+                "required": ["list_id"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "update_shopping_list_item",
+            "description": (
+                "Update an existing list item — toggle completed, change "
+                "quantity, replace note, or attach a product_id."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "list_id": {"type": "integer"},
+                    "item_id": {"type": "integer"},
+                    "note": {"type": "string"},
+                    "product_id": {"type": "integer"},
+                    "quantity": {"type": "integer", "minimum": 1},
+                    "completed": {"type": "boolean"},
+                },
+                "required": ["list_id", "item_id"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "remove_shopping_list_item",
+            "description": "Remove a single item from a shopping list.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "list_id": {"type": "integer"},
+                    "item_id": {"type": "integer"},
+                },
+                "required": ["list_id", "item_id"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "send_shopping_list_to_cart",
+            "description": (
+                "Resolve each un-completed item on a shopping list to the "
+                "cheapest catalog product + merchant, and add everything to "
+                "the user's universal cart. The user reviews and checks out "
+                "from the cart."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {"list_id": {"type": "integer"}},
+                "required": ["list_id"],
+            },
+        },
+    },
 ]
 
 
@@ -266,6 +470,135 @@ async def _tool_refresh_live_prices(args: dict, db: AsyncSession, user: User) ->
     return _jsonable(await service.refresh_for_query(str(args.get("query", ""))))
 
 
+# ---------- Cart CRUD --------------------------------------------------------
+
+async def _tool_remove_cart_item(args: dict, db: AsyncSession, user: User) -> dict:
+    service = CartService(db)
+    try:
+        cart = await service.remove_item(user.id, int(args["item_id"]))
+    except LookupError as e:
+        return {"error": str(e)}
+    return _jsonable({"removed": True, "cart": cart})
+
+
+async def _tool_update_cart_quantity(args: dict, db: AsyncSession, user: User) -> dict:
+    service = CartService(db)
+    try:
+        cart = await service.update_quantity(
+            user.id, int(args["item_id"]), int(args["quantity"]),
+        )
+    except LookupError as e:
+        return {"error": str(e)}
+    return _jsonable({"updated": True, "cart": cart})
+
+
+async def _tool_clear_cart(args: dict, db: AsyncSession, user: User) -> dict:
+    service = CartService(db)
+    cart = await service.clear(user.id)
+    return _jsonable({"cleared": True, "cart": cart})
+
+
+# ---------- Shopping lists ---------------------------------------------------
+
+async def _tool_list_shopping_lists(args: dict, db: AsyncSession, user: User) -> dict:
+    service = ShoppingListService(db)
+    return _jsonable({
+        "lists": await service.list_for_user(
+            user.id,
+            include_archived=bool(args.get("include_archived", False)),
+            kind=args.get("kind"),
+        )
+    })
+
+
+async def _tool_get_shopping_list(args: dict, db: AsyncSession, user: User) -> dict:
+    service = ShoppingListService(db)
+    data = await service.get_serialized(user.id, int(args["list_id"]))
+    if data is None:
+        return {"error": "List not found"}
+    return _jsonable({"list": data})
+
+
+async def _tool_create_shopping_list(args: dict, db: AsyncSession, user: User) -> dict:
+    service = ShoppingListService(db)
+    data = await service.create(
+        user.id,
+        title=str(args.get("title", "New list")),
+        kind=str(args.get("kind", "shopping")),
+        items=[dict(i) for i in (args.get("items") or [])],
+    )
+    return _jsonable({"created": True, "list": data})
+
+
+async def _tool_update_shopping_list(args: dict, db: AsyncSession, user: User) -> dict:
+    service = ShoppingListService(db)
+    data = await service.update(
+        user.id, int(args["list_id"]),
+        title=args.get("title"),
+        kind=args.get("kind"),
+        is_archived=args.get("is_archived"),
+    )
+    if data is None:
+        return {"error": "List not found"}
+    return _jsonable({"updated": True, "list": data})
+
+
+async def _tool_delete_shopping_list(args: dict, db: AsyncSession, user: User) -> dict:
+    service = ShoppingListService(db)
+    ok = await service.delete(user.id, int(args["list_id"]))
+    if not ok:
+        return {"error": "List not found"}
+    return {"deleted": True, "list_id": int(args["list_id"])}
+
+
+async def _tool_add_shopping_list_item(args: dict, db: AsyncSession, user: User) -> dict:
+    service = ShoppingListService(db)
+    try:
+        data = await service.add_item(
+            user.id, int(args["list_id"]),
+            note=args.get("note"),
+            product_id=args.get("product_id"),
+            quantity=int(args.get("quantity", 1)),
+        )
+    except LookupError as e:
+        return {"error": str(e)}
+    return _jsonable({"added": True, "list": data})
+
+
+async def _tool_update_shopping_list_item(args: dict, db: AsyncSession, user: User) -> dict:
+    service = ShoppingListService(db)
+    try:
+        data = await service.update_item(
+            user.id, int(args["list_id"]), int(args["item_id"]),
+            note=args.get("note"),
+            product_id=args.get("product_id"),
+            quantity=args.get("quantity"),
+            completed=args.get("completed"),
+        )
+    except LookupError as e:
+        return {"error": str(e)}
+    return _jsonable({"updated": True, "list": data})
+
+
+async def _tool_remove_shopping_list_item(args: dict, db: AsyncSession, user: User) -> dict:
+    service = ShoppingListService(db)
+    try:
+        data = await service.remove_item(
+            user.id, int(args["list_id"]), int(args["item_id"]),
+        )
+    except LookupError as e:
+        return {"error": str(e)}
+    return _jsonable({"removed": True, "list": data})
+
+
+async def _tool_send_shopping_list_to_cart(args: dict, db: AsyncSession, user: User) -> dict:
+    service = ShoppingListService(db)
+    try:
+        return _jsonable(await service.send_to_cart(user.id, int(args["list_id"])))
+    except LookupError as e:
+        return {"error": str(e)}
+
+
 EXECUTORS = {
     "search_products": _tool_search_products,
     "compare_products": _tool_compare_products,
@@ -274,6 +607,18 @@ EXECUTORS = {
     "create_price_rule": _tool_create_price_rule,
     "list_rules": _tool_list_rules,
     "refresh_live_prices": _tool_refresh_live_prices,
+    "remove_cart_item": _tool_remove_cart_item,
+    "update_cart_quantity": _tool_update_cart_quantity,
+    "clear_cart": _tool_clear_cart,
+    "list_shopping_lists": _tool_list_shopping_lists,
+    "get_shopping_list": _tool_get_shopping_list,
+    "create_shopping_list": _tool_create_shopping_list,
+    "update_shopping_list": _tool_update_shopping_list,
+    "delete_shopping_list": _tool_delete_shopping_list,
+    "add_shopping_list_item": _tool_add_shopping_list_item,
+    "update_shopping_list_item": _tool_update_shopping_list_item,
+    "remove_shopping_list_item": _tool_remove_shopping_list_item,
+    "send_shopping_list_to_cart": _tool_send_shopping_list_to_cart,
 }
 
 

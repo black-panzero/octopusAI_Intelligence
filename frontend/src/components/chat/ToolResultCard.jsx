@@ -226,6 +226,101 @@ const RulesList = ({ result }) => {
   );
 };
 
+const ShoppingListCard = ({ list, title }) => {
+  if (!list) return null;
+  const items = list.items || [];
+  const pending = items.filter((i) => !i.completed);
+  return (
+    <div className="border border-gray-200 rounded-lg bg-white p-3 text-xs">
+      <div className="flex items-center justify-between mb-2">
+        <span className="font-semibold text-gray-900 truncate">
+          {title || 'Shopping list'} · {list.title}
+        </span>
+        <span className={`text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded ${
+          list.kind === 'wishlist' ? 'bg-pink-100 text-pink-700' : 'bg-blue-100 text-blue-700'
+        }`}>
+          {list.kind}
+        </span>
+      </div>
+      {items.length === 0 ? (
+        <p className="text-gray-500 italic">Empty.</p>
+      ) : (
+        <ul className="space-y-1">
+          {items.slice(0, 8).map((it) => (
+            <li key={it.id} className="flex items-center justify-between">
+              <span className={`truncate ${it.completed ? 'line-through text-gray-400' : 'text-gray-800'}`}>
+                {it.quantity}× {it.product_name || it.note}
+              </span>
+              {it.current_best_price != null && (
+                <span className="text-gray-500 ml-2 flex-shrink-0">
+                  from {formatKES(it.current_best_price)}
+                </span>
+              )}
+            </li>
+          ))}
+          {items.length > 8 && (
+            <li className="text-gray-400 text-[11px]">+{items.length - 8} more…</li>
+          )}
+        </ul>
+      )}
+      {pending.length > 0 && (
+        <p className="mt-2 pt-2 border-t border-gray-100 text-[11px] text-gray-500">
+          {pending.length} item{pending.length === 1 ? '' : 's'} ready for the cart.
+        </p>
+      )}
+    </div>
+  );
+};
+
+const ShoppingListsSummary = ({ result }) => {
+  const lists = result?.lists || [];
+  if (lists.length === 0) return null;
+  return (
+    <div className="border border-gray-200 rounded-lg bg-white p-3 text-xs">
+      <p className="font-semibold text-gray-900 mb-2">Your lists</p>
+      <ul className="space-y-1">
+        {lists.map((l) => (
+          <li key={l.id} className="flex items-center justify-between">
+            <span className="truncate">
+              <span className={`text-[10px] uppercase tracking-wide mr-1.5 ${
+                l.kind === 'wishlist' ? 'text-pink-600' : 'text-blue-600'
+              }`}>{l.kind}</span>
+              {l.title}
+            </span>
+            <span className="text-gray-500">{l.item_count ?? 0} items</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+const SendToCartSummary = ({ result }) => {
+  if (!result?.list_title) return null;
+  return (
+    <div className="border border-gray-200 rounded-lg bg-white p-3 text-xs space-y-1">
+      <p className="font-semibold text-gray-900">
+        "{result.list_title}" → cart
+      </p>
+      <p className="text-green-700">{result.added_count} added</p>
+      {result.skipped_count > 0 && (
+        <details className="mt-1">
+          <summary className="text-gray-600 cursor-pointer">
+            {result.skipped_count} skipped
+          </summary>
+          <ul className="mt-1 pl-3 text-[11px] text-gray-500 space-y-0.5">
+            {(result.items_skipped || []).slice(0, 5).map((s) => (
+              <li key={s.item_id}>
+                {s.note || `#${s.item_id}`} — {s.reason}
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+    </div>
+  );
+};
+
 const RefreshSummary = ({ result }) => {
   const per = result?.per_scraper || [];
   const total = result?.offers_persisted ?? 0;
@@ -271,18 +366,30 @@ const ToolResultCard = ({ invocation }) => {
     );
   }
   switch (tool) {
-    case 'search_products':     return <SearchResults result={result} />;
-    case 'compare_products':    return <CompareTable result={result} />;
-    case 'add_to_cart':         return <CartSummary result={result} title="Added — current cart" />;
-    case 'view_cart':           return <CartSummary result={result} />;
+    case 'search_products':            return <SearchResults result={result} />;
+    case 'compare_products':           return <CompareTable result={result} />;
+    case 'add_to_cart':                return <CartSummary result={result} title="Added — current cart" />;
+    case 'view_cart':                  return <CartSummary result={result} />;
+    case 'remove_cart_item':           return <CartSummary result={result} title="Removed — current cart" />;
+    case 'update_cart_quantity':       return <CartSummary result={result} title="Updated — current cart" />;
+    case 'clear_cart':                 return <CartSummary result={result} title="Cart cleared" />;
     case 'create_price_rule':
       return (
         <div className="text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 rounded px-2 py-1">
           Rule #{result.rule_id} saved — target {formatKES(result.target_price)} · {result.action}
         </div>
       );
-    case 'list_rules':          return <RulesList result={result} />;
-    case 'refresh_live_prices': return <RefreshSummary result={result} />;
+    case 'list_rules':                 return <RulesList result={result} />;
+    case 'refresh_live_prices':        return <RefreshSummary result={result} />;
+    case 'list_shopping_lists':        return <ShoppingListsSummary result={result} />;
+    case 'get_shopping_list':          return <ShoppingListCard list={result.list} />;
+    case 'create_shopping_list':       return <ShoppingListCard list={result.list} title="Created" />;
+    case 'update_shopping_list':       return <ShoppingListCard list={result.list} title="Updated" />;
+    case 'add_shopping_list_item':     return <ShoppingListCard list={result.list} title="Added to" />;
+    case 'update_shopping_list_item':  return <ShoppingListCard list={result.list} title="Updated" />;
+    case 'remove_shopping_list_item':  return <ShoppingListCard list={result.list} title="Removed from" />;
+    case 'delete_shopping_list':       return null;
+    case 'send_shopping_list_to_cart': return <SendToCartSummary result={result} />;
     default:
       // Never leak raw JSON — if we don't know the tool yet, render nothing
       // and let the assistant explain in prose.

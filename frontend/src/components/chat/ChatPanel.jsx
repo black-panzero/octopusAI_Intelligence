@@ -35,12 +35,25 @@ const ChatPanel = ({
   const [input, setInput] = useState('');
   const [intelCollapsed, setIntelCollapsed] = useState(true);
   const scrollRef = useRef(null);
+  const inputRef = useRef(null);
 
   useEffect(() => { if (status === null) checkStatus(); }, [status, checkStatus]);
   useEffect(() => { if (lastError) toast.error(lastError); }, [lastError]);
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages, loading]);
+
+  // Keep the cursor in the composer after a reply lands so the user can
+  // keep typing without having to click the field again.
+  useEffect(() => {
+    if (!loading && inputRef.current && document.activeElement !== inputRef.current) {
+      // Only refocus on desktop-ish viewports to avoid keyboard popping
+      // back up on mobile when scrolling.
+      if (window.matchMedia && window.matchMedia('(min-width: 768px)').matches) {
+        inputRef.current.focus();
+      }
+    }
+  }, [loading]);
 
   const hasActivity = messages.some((m) => m.role === 'user' || m.content);
   // Surface intelligence automatically once the user has said anything.
@@ -53,7 +66,11 @@ const ChatPanel = ({
     const text = input.trim();
     if (!text) return;
     setInput('');
+    // Refocus immediately so there's no visible caret gap while the
+    // request is in flight.
+    if (inputRef.current) inputRef.current.focus();
     await send(text);
+    if (inputRef.current) inputRef.current.focus();
   };
 
   const canChat = status?.configured !== false;
@@ -138,11 +155,13 @@ const ChatPanel = ({
 
       <form onSubmit={handleSubmit} className="border-t border-gray-200 p-2 flex gap-2 bg-white">
         <input
+          ref={inputRef}
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder={canChat ? 'Ask about prices, compare, add to cart…' : 'Configure LLM_API_KEY to chat'}
           disabled={!canChat || loading}
+          autoFocus
           className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-fuchsia-500 focus:border-fuchsia-500 disabled:bg-gray-50"
         />
         <button

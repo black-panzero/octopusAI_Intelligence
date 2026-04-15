@@ -12,6 +12,7 @@ import CartView from './components/cart/CartView';
 import RulesView from './components/rules/RulesView';
 import ChatView from './components/chat/ChatView';
 import FloatingChatWidget from './components/chat/FloatingChatWidget';
+import ShoppingListsView from './components/shoppingLists/ShoppingListsView';
 import AuthScreen from './components/auth/AuthScreen';
 import { authApi, dealsApi } from './api';
 import { useAuthStore } from './stores/authStore';
@@ -154,9 +155,10 @@ function AuthenticatedApp({ user, onLogout }) {
 
   const tabs = [
     { key: 'dashboard', label: 'Dashboard' },
-    { key: 'chat',      label: 'Chat AI', badge: 'NEW' },
+    { key: 'chat',      label: 'Chat AI' },
     { key: 'search',    label: 'Compare Prices' },
     { key: 'cart',      label: 'Cart', count: cartItemCount },
+    { key: 'lists',     label: 'Lists', badge: 'NEW' },
     { key: 'tracking',  label: 'Tracking' },
     { key: 'deals',     label: `Deals (${allDeals.length})`, match: ['deals', 'add-deal'] },
   ];
@@ -212,6 +214,7 @@ function AuthenticatedApp({ user, onLogout }) {
           {currentView === 'chat' && <ChatView />}
           {currentView === 'search' && <SearchView />}
           {currentView === 'cart' && <CartView onNavigate={handleNavigation} />}
+          {currentView === 'lists' && <ShoppingListsView onNavigate={handleNavigation} />}
           {currentView === 'tracking' && <RulesView onNavigate={handleNavigation} />}
 
           {currentView === 'deals' && (
