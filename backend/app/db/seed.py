@@ -77,25 +77,41 @@ PRODUCTS: list[dict] = [
 
 
 async def seed_if_empty(db: AsyncSession) -> None:
-    """Populate seed data if the merchants table is empty."""
-    count = (await db.execute(select(Merchant).limit(1))).scalar_one_or_none()
-    if count is not None:
-        logger.debug("Seed skipped — merchants already present")
-        return
+    """
+    Idempotently ensure the catalog is populated.
 
-    logger.info("Seeding merchants, products and initial price snapshots")
-
-    # 1. Merchants
-    merchants_by_slug: dict[str, Merchant] = {}
+    Runs on every boot but only inserts rows that are missing, so it is
+    safe to re-run without breaking existing data. This also upgrades
+    databases that were populated earlier by the now-removed mock
+    adapters (they only wrote a handful of merchants/products).
+    """
+    # 1. Merchants — upsert by slug
+    existing_merchants = (await db.execute(select(Merchant))).scalars().all()
+    merchants_by_slug: dict[str, Merchant] = {m.slug: m for m in existing_merchants}
+    new_merchant_count = 0
     for m in MERCHANTS:
+        if m["slug"] in merchants_by_slug:
+            continue
         obj = Merchant(slug=m["slug"], name=m["name"], base_url=m["base_url"], is_active=True)
         db.add(obj)
         merchants_by_slug[m["slug"]] = obj
-    await db.flush()
+        new_merchant_count += 1
+    if new_merchant_count:
+        await db.flush()
 
-    # 2. Products + snapshots
+    # 2. Products + initial snapshots — upsert by canonical_name
+    existing_canonicals = {
+        row[0] for row in (
+            await db.execute(select(Product.canonical_name))
+        ).all()
+    }
+
+    new_product_count = 0
     for p in PRODUCTS:
         canonical = " ".join(p["name"].lower().split())
+        if canonical in existing_canonicals:
+            continue
+
         product = Product(
             canonical_name=canonical,
             display_name=p["name"],
@@ -104,6 +120,7 @@ async def seed_if_empty(db: AsyncSession) -> None:
         )
         db.add(product)
         await db.flush()
+        new_product_count += 1
 
         for slug, price in p["offers"]:
             merchant = merchants_by_slug.get(slug)
@@ -121,4 +138,12 @@ async def seed_if_empty(db: AsyncSession) -> None:
             )
 
     await db.commit()
-    logger.info("Seed complete", merchants=len(MERCHANTS), products=len(PRODUCTS))
+
+    if new_merchant_count or new_product_count:
+        logger.info(
+            "Seed applied",
+            new_merchants=new_merchant_count,
+            new_products=new_product_count,
+        )
+    else:
+        logger.debug("Seed skipped — catalog already complete")
