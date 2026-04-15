@@ -1,28 +1,155 @@
 // src/components/Dashboard.jsx
 import React, { useEffect, useState } from 'react';
-import { dealsApi } from '../api';
-import { formatKES, formatDate, computeDiscount } from '../lib/format';
+import toast from 'react-hot-toast';
+import { dealsApi, recommendationsApi } from '../api';
+import { useCartStore } from '../stores/cartStore';
+import { formatKES, formatDate, computeDiscount, formatRating } from '../lib/format';
+import { extractErrorMessage } from '../lib/errors';
+
+const StatTile = ({ name, value, icon, color, description }) => {
+  const classes = {
+    blue:   'bg-blue-50 text-blue-600 border-blue-200',
+    green:  'bg-green-50 text-green-600 border-green-200',
+    purple: 'bg-purple-50 text-purple-600 border-purple-200',
+    orange: 'bg-orange-50 text-orange-600 border-orange-200',
+  }[color] || 'bg-blue-50 text-blue-600 border-blue-200';
+  return (
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium text-gray-600">{name}</p>
+          <p className="text-3xl font-bold text-gray-900 mt-2">
+            {Number(value).toLocaleString('en-KE')}
+          </p>
+          <p className="text-xs text-gray-500 mt-1">{description}</p>
+        </div>
+        <div className={`p-3 rounded-full text-2xl ${classes}`}>{icon}</div>
+      </div>
+    </div>
+  );
+};
+
+const BestDealCard = ({ deal, onAdd }) => (
+  <div className="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow">
+    <div className="flex items-start justify-between gap-2 mb-2">
+      <div className="min-w-0">
+        <p className="font-semibold text-gray-900 text-sm truncate">{deal.product.display_name}</p>
+        <p className="text-[11px] text-gray-500 truncate">
+          {[deal.product.brand, deal.product.category, deal.product.size].filter(Boolean).join(' • ')}
+        </p>
+      </div>
+      <span className="text-[10px] uppercase tracking-wide bg-green-600 text-white rounded px-1.5 py-0.5">
+        -{deal.savings_pct.toFixed(0)}%
+      </span>
+    </div>
+    <div className="flex items-baseline gap-2 mb-2">
+      <span className="text-lg font-bold text-blue-600">{formatKES(deal.min_price)}</span>
+      <span className="text-xs text-gray-500 line-through">{formatKES(deal.max_price)}</span>
+    </div>
+    <p className="text-[11px] text-gray-600 mb-2 truncate">
+      Cheapest at <span className="font-medium text-gray-900">{deal.best_merchant}</span>
+      {' · '}{deal.offer_count} merchants
+    </p>
+    <button
+      onClick={() => onAdd?.(deal)}
+      className="w-full text-xs font-semibold bg-blue-600 text-white px-2 py-1.5 rounded hover:bg-blue-700"
+    >
+      + Add cheapest
+    </button>
+  </div>
+);
+
+const PriceDropCard = ({ drop, onAdd }) => (
+  <div className="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow">
+    <div className="flex items-start justify-between gap-2 mb-2">
+      <div className="min-w-0">
+        <p className="font-semibold text-gray-900 text-sm truncate">{drop.product.display_name}</p>
+        <p className="text-[11px] text-gray-500 truncate">
+          {drop.merchant} · {formatDate(drop.observed_at)}
+        </p>
+      </div>
+      <span className="text-[10px] uppercase tracking-wide bg-rose-600 text-white rounded px-1.5 py-0.5">
+        ↓ {drop.drop_pct.toFixed(0)}%
+      </span>
+    </div>
+    <div className="flex items-baseline gap-2 mb-2">
+      <span className="text-lg font-bold text-rose-600">{formatKES(drop.current_price)}</span>
+      <span className="text-xs text-gray-500 line-through">{formatKES(drop.previous_price)}</span>
+    </div>
+    <button
+      onClick={() => onAdd?.(drop)}
+      className="w-full text-xs font-semibold bg-rose-600 text-white px-2 py-1.5 rounded hover:bg-rose-700"
+    >
+      + Add to cart
+    </button>
+  </div>
+);
+
+const TopRatedCard = ({ item, onAdd }) => (
+  <div className="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow">
+    <p className="font-semibold text-gray-900 text-sm truncate">{item.product.display_name}</p>
+    <p className="text-[11px] text-gray-500 truncate">
+      {[item.product.brand, item.product.category].filter(Boolean).join(' • ')}
+    </p>
+    <p className="text-xs text-amber-600 mt-1">
+      {formatRating(item.product.rating, item.product.review_count)}
+    </p>
+    <div className="flex items-baseline justify-between mt-2">
+      {item.min_price != null && <span className="text-sm font-bold text-blue-600">{formatKES(item.min_price)}</span>}
+      {item.merchant && <span className="text-[10px] text-gray-500 truncate max-w-[100px]">@ {item.merchant}</span>}
+    </div>
+    {item.merchant_id && item.product?.id && (
+      <button
+        onClick={() => onAdd?.(item)}
+        className="mt-2 w-full text-xs font-semibold bg-amber-600 text-white px-2 py-1.5 rounded hover:bg-amber-700"
+      >
+        + Add
+      </button>
+    )}
+  </div>
+);
 
 const Dashboard = ({ onNavigate }) => {
   const [stats, setStats] = useState(null);
+  const [recs, setRecs] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const addToCart = useCartStore((s) => s.add);
 
-  const fetchStats = async () => {
+  const fetchAll = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await dealsApi.getDealStats();
-      setStats(data);
+      const [s, r] = await Promise.all([
+        dealsApi.getDealStats(),
+        recommendationsApi.get().catch(() => null),
+      ]);
+      setStats(s);
+      setRecs(r);
     } catch (err) {
-      setError('Failed to load dashboard statistics');
-      console.error('Error fetching stats:', err);
+      setError(extractErrorMessage(err, 'Failed to load dashboard'));
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { fetchStats(); }, []);
+  useEffect(() => { fetchAll(); }, []);
+
+  const handleAdd = async (row) => {
+    const product_id = row.product?.id;
+    const merchant_id = row.merchant_id
+      || (row.offers && row.offers[0]?.merchant_id);
+    if (!product_id || !merchant_id) {
+      toast.error('This recommendation is missing a merchant id — refresh.');
+      return;
+    }
+    try {
+      await addToCart({ product_id, merchant_id, quantity: 1 });
+      toast.success(`Added ${row.product.display_name}`);
+    } catch (err) {
+      toast.error(extractErrorMessage(err, 'Could not add to cart'));
+    }
+  };
 
   if (loading) {
     return (
@@ -43,41 +170,29 @@ const Dashboard = ({ onNavigate }) => {
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-        <div className="flex items-center">
-          <svg className="h-5 w-5 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <div className="ml-3 flex-1">
-            <h3 className="text-sm font-medium text-red-800">Error Loading Dashboard</h3>
-            <p className="text-sm text-red-700 mt-1">{error}</p>
-          </div>
-          <button
-            onClick={fetchStats}
-            className="px-3 py-2 text-sm font-medium text-red-800 hover:bg-red-100 rounded-md"
-          >
-            Retry
-          </button>
+      <div className="bg-red-50 border border-red-200 rounded-lg p-6 flex items-center">
+        <div className="flex-1">
+          <h3 className="text-sm font-medium text-red-800">Error Loading Dashboard</h3>
+          <p className="text-sm text-red-700 mt-1">{error}</p>
         </div>
+        <button onClick={fetchAll} className="px-3 py-2 text-sm font-medium text-red-800 hover:bg-red-100 rounded-md">
+          Retry
+        </button>
       </div>
     );
   }
 
-  const statCards = [
-    { name: 'Total Deals',   value: stats?.total_deals       ?? 0, icon: '📦', color: 'blue',   description: 'All deals in system' },
-    { name: 'Active Deals',  value: stats?.active_deals      ?? 0, icon: '✅', color: 'green',  description: 'Currently available' },
-    { name: 'Merchants',     value: stats?.unique_merchants  ?? 0, icon: '🏪', color: 'purple', description: 'Partner stores' },
-    { name: 'Categories',    value: stats?.unique_categories ?? 0, icon: '📂', color: 'orange', description: 'Product types' },
-  ];
-
-  const colorClasses = {
-    blue: 'bg-blue-50 text-blue-600 border-blue-200',
-    green: 'bg-green-50 text-green-600 border-green-200',
-    purple: 'bg-purple-50 text-purple-600 border-purple-200',
-    orange: 'bg-orange-50 text-orange-600 border-orange-200',
-  };
-
   const recent = Array.isArray(stats?.recent_deals) ? stats.recent_deals : [];
+  const bestDeals = recs?.best_deals || [];
+  const priceDrops = recs?.price_drops || [];
+  const topRated = recs?.top_rated || [];
+
+  const statCards = [
+    { name: 'Total Deals',  value: stats?.total_deals       ?? 0, icon: '📦', color: 'blue',   description: 'All deals in system' },
+    { name: 'Active Deals', value: stats?.active_deals      ?? 0, icon: '✅', color: 'green',  description: 'Currently available' },
+    { name: 'Merchants',    value: stats?.unique_merchants  ?? 0, icon: '🏪', color: 'purple', description: 'Partner stores' },
+    { name: 'Categories',   value: stats?.unique_categories ?? 0, icon: '📂', color: 'orange', description: 'Product types' },
+  ];
 
   return (
     <div className="space-y-6">
@@ -103,23 +218,41 @@ const Dashboard = ({ onNavigate }) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {statCards.map((stat) => (
-          <div key={stat.name} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">{stat.name}</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">
-                  {Number(stat.value).toLocaleString('en-KE')}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">{stat.description}</p>
-              </div>
-              <div className={`p-3 rounded-full text-2xl ${colorClasses[stat.color]}`}>
-                {stat.icon}
-              </div>
-            </div>
-          </div>
-        ))}
+        {statCards.map((s) => <StatTile key={s.name} {...s} />)}
       </div>
+
+      {bestDeals.length > 0 && (
+        <section>
+          <h2 className="text-lg font-semibold text-gray-900 mb-3">🔥 Best deals right now</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {bestDeals.map((d) => (
+              <BestDealCard key={d.product.id} deal={d} onAdd={handleAdd} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {priceDrops.length > 0 && (
+        <section>
+          <h2 className="text-lg font-semibold text-gray-900 mb-3">↓ Recent price drops</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {priceDrops.map((d, i) => (
+              <PriceDropCard key={`${d.product.id}-${i}`} drop={d} onAdd={handleAdd} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {topRated.length > 0 && (
+        <section>
+          <h2 className="text-lg font-semibold text-gray-900 mb-3">⭐ Top-rated products</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {topRated.map((t) => (
+              <TopRatedCard key={t.product.id} item={t} onAdd={handleAdd} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {recent.length > 0 && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">

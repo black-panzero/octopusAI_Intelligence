@@ -62,10 +62,27 @@ export const authApi = {
 // Products (cross-merchant search)
 // -----------------------------
 export const productsApi = {
-  search: async (query) => {
-    const { data } = await api.get('/products/search', { params: { q: query } });
-    return data; // { query, count, results: [...] }
+  search: async (query, { live = false } = {}) => {
+    const params = { q: query };
+    if (live) params.live = true;
+    const { data } = await api.get('/products/search', { params });
+    return data;
   },
+  refresh: async (query) => {
+    const { data } = await api.post('/products/refresh', null, { params: { q: query } });
+    return data;
+  },
+  history: async (product_id) => {
+    const { data } = await api.get(`/products/${product_id}/history`);
+    return data;
+  },
+};
+
+// -----------------------------
+// Recommendations (Dashboard)
+// -----------------------------
+export const recommendationsApi = {
+  get: async () => (await api.get('/recommendations/')).data,
 };
 
 // -----------------------------

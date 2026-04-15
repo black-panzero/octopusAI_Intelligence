@@ -12,6 +12,8 @@ structlog
 bcrypt
 pyjwt
 openai
+beautifulsoup4
+lxml
 pytest
 pytest-asyncio
 pytest-cov

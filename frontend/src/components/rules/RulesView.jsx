@@ -1,14 +1,20 @@
 // src/components/rules/RulesView.jsx
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { rulesApi } from '../../api';
+import { productsApi, rulesApi } from '../../api';
 import { formatKES } from '../../lib/format';
+import { extractErrorMessage } from '../../lib/errors';
+import PriceHistoryChart from '../charts/PriceHistoryChart';
 
 const RulesView = ({ onNavigate }) => {
   const [rules, setRules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [evaluating, setEvaluating] = useState(false);
   const [error, setError] = useState(null);
+
+  const [historyOpenFor, setHistoryOpenFor] = useState(null);
+  const [historyData, setHistoryData] = useState(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -17,7 +23,7 @@ const RulesView = ({ onNavigate }) => {
       const data = await rulesApi.list();
       setRules(Array.isArray(data) ? data : []);
     } catch (err) {
-      setError(err?.response?.data?.detail || 'Failed to load rules');
+      setError(extractErrorMessage(err, 'Failed to load rules'));
     } finally {
       setLoading(false);
     }
@@ -31,7 +37,7 @@ const RulesView = ({ onNavigate }) => {
       setRules(Array.isArray(next) ? next : []);
       toast.success('Rule removed');
     } catch (err) {
-      toast.error('Could not delete rule');
+      toast.error(extractErrorMessage(err, 'Could not delete rule'));
     }
   };
 
@@ -39,16 +45,33 @@ const RulesView = ({ onNavigate }) => {
     setEvaluating(true);
     try {
       const { triggered } = await rulesApi.evaluate();
-      if (triggered.length === 0) {
-        toast('No rules triggered right now');
-      } else {
-        toast.success(`${triggered.length} rule${triggered.length === 1 ? '' : 's'} triggered`);
-      }
+      if (triggered.length === 0) toast('No rules triggered right now');
+      else toast.success(`${triggered.length} rule${triggered.length === 1 ? '' : 's'} triggered`);
       await load();
     } catch (err) {
-      toast.error('Evaluation failed');
+      toast.error(extractErrorMessage(err, 'Evaluation failed'));
     } finally {
       setEvaluating(false);
+    }
+  };
+
+  const handleToggleHistory = async (rule) => {
+    if (historyOpenFor === rule.id) {
+      setHistoryOpenFor(null);
+      setHistoryData(null);
+      return;
+    }
+    setHistoryOpenFor(rule.id);
+    setHistoryData(null);
+    setHistoryLoading(true);
+    try {
+      const data = await productsApi.history(rule.product_id);
+      setHistoryData(data);
+    } catch (err) {
+      toast.error(extractErrorMessage(err, 'Could not load history'));
+      setHistoryOpenFor(null);
+    } finally {
+      setHistoryLoading(false);
     }
   };
 
@@ -78,7 +101,6 @@ const RulesView = ({ onNavigate }) => {
       </div>
 
       {loading && <p className="text-sm text-gray-500">Loading rules…</p>}
-
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-md p-3 text-sm text-red-700">
           {error}
@@ -143,11 +165,17 @@ const RulesView = ({ onNavigate }) => {
 
             {r.triggered && (
               <div className="mt-3 bg-green-50 border border-green-200 rounded px-2 py-1.5 text-xs text-green-800">
-                ✓ Below target — hit “Evaluate now” to execute the action.
+                ✓ Below target — hit "Evaluate now" to execute.
               </div>
             )}
 
-            <div className="mt-3 flex justify-end">
+            <div className="mt-3 flex items-center justify-between">
+              <button
+                onClick={() => handleToggleHistory(r)}
+                className="text-xs font-medium text-blue-600 hover:text-blue-800"
+              >
+                {historyOpenFor === r.id ? '▲ Hide history' : '📈 View history'}
+              </button>
               <button
                 onClick={() => handleDelete(r.id)}
                 className="text-xs text-red-600 hover:text-red-800"
@@ -155,6 +183,17 @@ const RulesView = ({ onNavigate }) => {
                 Remove
               </button>
             </div>
+
+            {historyOpenFor === r.id && (
+              <div className="mt-3 border-t border-gray-100 pt-3">
+                {historyLoading && (
+                  <p className="text-xs text-gray-500">Loading price history…</p>
+                )}
+                {!historyLoading && historyData && (
+                  <PriceHistoryChart data={historyData} width={520} height={200} />
+                )}
+              </div>
+            )}
           </div>
         ))}
       </div>

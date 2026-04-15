@@ -18,6 +18,7 @@ from app.routers.cart import router as cart_router
 from app.routers.chat import router as chat_router
 from app.routers.deals import router as deals_router
 from app.routers.products import router as products_router
+from app.routers.recommendations import router as recommendations_router
 from app.routers.rules import router as rules_router
 
 # Configure structured logging
@@ -123,6 +124,11 @@ def create_app() -> FastAPI:
         chat_router,
         prefix="/api/v1/chat",
         tags=["chat"]
+    )
+    app.include_router(
+        recommendations_router,
+        prefix="/api/v1/recommendations",
+        tags=["recommendations"]
     )
 
     @app.get("/", response_class=JSONResponse)

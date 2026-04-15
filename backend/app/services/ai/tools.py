@@ -15,6 +15,7 @@ from app.db.models.user import User
 from app.services.cart_service import CartService
 from app.services.catalog_service import CatalogService
 from app.services.rules_service import RulesService
+from app.services.scraping_service import ScrapingService
 
 logger = structlog.get_logger(__name__)
 
@@ -136,6 +137,25 @@ TOOL_SCHEMAS: list[dict] = [
             "parameters": {"type": "object", "properties": {}},
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "refresh_live_prices",
+            "description": (
+                "Fetch fresh prices from live merchant websites (Naivas, "
+                "Carrefour, Quickmart, Jumia Kenya) for a query and persist "
+                "the results into the catalog. Use this when the user wants "
+                "the most up-to-date prices rather than whatever is cached."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string"},
+                },
+                "required": ["query"],
+            },
+        },
+    },
 ]
 
 
@@ -241,6 +261,11 @@ async def _tool_list_rules(args: dict, db: AsyncSession, user: User) -> dict:
     return {"rules": _jsonable(await service.list_for_user(user.id))}
 
 
+async def _tool_refresh_live_prices(args: dict, db: AsyncSession, user: User) -> dict:
+    service = ScrapingService(db)
+    return _jsonable(await service.refresh_for_query(str(args.get("query", ""))))
+
+
 EXECUTORS = {
     "search_products": _tool_search_products,
     "compare_products": _tool_compare_products,
@@ -248,6 +273,7 @@ EXECUTORS = {
     "view_cart": _tool_view_cart,
     "create_price_rule": _tool_create_price_rule,
     "list_rules": _tool_list_rules,
+    "refresh_live_prices": _tool_refresh_live_prices,
 }
 
 

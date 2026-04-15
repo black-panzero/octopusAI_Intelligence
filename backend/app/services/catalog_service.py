@@ -9,7 +9,7 @@ cross-merchant comparisons.
 from typing import Optional
 
 import structlog
-from sqlalchemy import and_, func, or_, select
+from sqlalchemy import and_, desc, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.merchant import Merchant
@@ -150,3 +150,47 @@ class CatalogService:
         )
         result = (await self.db.execute(stmt)).first()
         return result if result is None else (result[0], result[1])
+
+    async def price_history(
+        self, product_id: int, limit: int = 120,
+    ) -> dict:
+        """
+        Return every PriceSnapshot for a product grouped by merchant,
+        ordered chronologically. The UI uses this for the sparkline chart
+        on the Tracking tab.
+        """
+        product = (await self.db.execute(
+            select(Product).where(Product.id == product_id)
+        )).scalar_one_or_none()
+        if product is None:
+            return {"product": None, "series": []}
+
+        stmt = (
+            select(PriceSnapshot, Merchant)
+            .join(Merchant, PriceSnapshot.merchant_id == Merchant.id)
+            .where(PriceSnapshot.product_id == product_id)
+            .order_by(PriceSnapshot.captured_at.asc())
+            .limit(limit * 4)
+        )
+        rows = (await self.db.execute(stmt)).all()
+
+        series: dict[str, dict] = {}
+        for snap, merchant in rows:
+            bucket = series.setdefault(
+                merchant.slug,
+                {"merchant": merchant.name, "slug": merchant.slug, "points": []},
+            )
+            bucket["points"].append({
+                "t": snap.captured_at.isoformat(),
+                "price": snap.price,
+            })
+
+        return {
+            "product": {
+                "id": product.id,
+                "display_name": product.display_name,
+                "brand": product.brand,
+                "category": product.category,
+            },
+            "series": list(series.values()),
+        }
