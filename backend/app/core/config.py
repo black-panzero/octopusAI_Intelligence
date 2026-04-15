@@ -41,6 +41,17 @@ class Settings(BaseSettings):
     # Logging settings
     log_level: str = Field(default="INFO", description="Logging level")
 
+    # Auth / JWT settings
+    secret_key: str = Field(
+        default="change-me-in-production-use-a-long-random-string",
+        description="Secret key used to sign JWT tokens",
+    )
+    jwt_algorithm: str = Field(default="HS256", description="JWT signing algorithm")
+    access_token_expire_minutes: int = Field(
+        default=60 * 24,
+        description="Access token lifetime in minutes (default 24h)",
+    )
+
     # CORS settings
     backend_cors_origins: Union[str, List[AnyHttpUrl]] = Field(
         default=[],

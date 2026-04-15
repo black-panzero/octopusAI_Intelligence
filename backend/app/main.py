@@ -13,6 +13,7 @@ from fastapi.responses import JSONResponse
 
 from app.core.config import get_settings
 from app.db.database import create_tables, get_database
+from app.routers.auth import router as auth_router
 from app.routers.deals import router as deals_router
 
 # Configure structured logging
@@ -85,6 +86,11 @@ def create_app() -> FastAPI:
     )
 
     # Add routers
+    app.include_router(
+        auth_router,
+        prefix="/api/v1/auth",
+        tags=["auth"]
+    )
     app.include_router(
         deals_router,
         prefix="/api/v1/deals",

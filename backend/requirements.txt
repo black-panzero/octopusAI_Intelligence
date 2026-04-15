@@ -2,12 +2,15 @@ fastapi[all]
 uvicorn[standard]
 sqlalchemy
 pydantic
+pydantic[email]
 pydantic-settings
 alembic
 aiosqlite
 python-multipart
 httpx
 structlog
+bcrypt
+pyjwt
 pytest
 pytest-asyncio
 pytest-cov

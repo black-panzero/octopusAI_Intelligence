@@ -1,65 +1,87 @@
 // src/api.js
 import axios from 'axios';
-
-//const API_BASE_URL = 'http://localhost:8000/api/v1';
-
-// const API_BASE_URL =
-//  window.location.hostname.includes("github.dev")
-//    ? `https://${window.location.hostname.replace("-3000", "-8000")}/api/v1`
-//    : "http://localhost:8000/api/v1";
-
-// const api = axios.create({ baseURL: API_BASE_URL });
+import { getAuth, useAuthStore } from './stores/authStore';
 
 const API_BASE_URL = '/api/v1';
 
-// Create axios instance with base configuration
 const api = axios.create({
   baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  headers: { 'Content-Type': 'application/json' },
 });
 
-// Deals API endpoints
-export const dealsApi = {
-  // Create a new deal
-  createDeal: async (dealData) => {
-    const response = await api.post('/deals/', dealData);
-    return response.data;
-  },
+// Attach bearer token on every request when we have one.
+api.interceptors.request.use((config) => {
+  const { token } = getAuth();
+  if (token) {
+    config.headers = config.headers || {};
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
-  // Get all deals with optional query parameters
-  getAllDeals: async (params = {}) => {
-    const response = await api.get('/deals/', { params });
-    return response.data;
-  },
-
-  // Get deal by ID
-  getDealById: async (dealId) => {
-    const response = await api.get(`/deals/${dealId}`);
-    return response.data;
-  },
-
-  // Get deals by merchant
-  getDealsByMerchant: async (merchantName) => {
-    const response = await api.get(`/deals/merchant/${merchantName}`);
-    return response.data;
-  },
-
-  // Get deal statistics
-  getDealStats: async () => {
-    const response = await api.get('/deals/stats/summary');
-    return response.data;
-  },
-};
-
-// Error handling interceptor
+// On 401 (expired / invalid token), drop the session so the UI shows the login screen.
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    if (error?.response?.status === 401) {
+      const { token, logout } = useAuthStore.getState();
+      if (token) logout();
+    }
     console.error('API Error:', error.response?.data || error.message);
     return Promise.reject(error);
-  }
+  },
 );
+
+// -----------------------------
+// Auth
+// -----------------------------
+export const authApi = {
+  register: async ({ email, password, full_name }) => {
+    const { data } = await api.post('/auth/register', { email, password, full_name });
+    return data;
+  },
+
+  // /auth/login is OAuth2 password-flow compatible → form-encoded body
+  login: async ({ email, password }) => {
+    const body = new URLSearchParams();
+    body.append('username', email);
+    body.append('password', password);
+    const { data } = await api.post('/auth/login', body, {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    });
+    return data; // { access_token, token_type, expires_in, user }
+  },
+
+  me: async () => {
+    const { data } = await api.get('/auth/me');
+    return data;
+  },
+};
+
+// -----------------------------
+// Deals
+// -----------------------------
+export const dealsApi = {
+  createDeal: async (dealData) => {
+    const { data } = await api.post('/deals/', dealData);
+    return data;
+  },
+  getAllDeals: async (params = {}) => {
+    const { data } = await api.get('/deals/', { params });
+    return data;
+  },
+  getDealById: async (dealId) => {
+    const { data } = await api.get(`/deals/${dealId}`);
+    return data;
+  },
+  getDealsByMerchant: async (merchantName) => {
+    const { data } = await api.get(`/deals/merchant/${merchantName}`);
+    return data;
+  },
+  getDealStats: async () => {
+    const { data } = await api.get('/deals/stats/summary');
+    return data;
+  },
+};
 
 export default api;
