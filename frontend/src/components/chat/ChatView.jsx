@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { chatApi } from '../../api';
 import { extractErrorMessage } from '../../lib/errors';
+import Markdown from './Markdown';
 import ToolResultCard from './ToolResultCard';
 
 const SUGGESTIONS = [
@@ -134,8 +135,8 @@ const ChatView = () => {
             <div key={idx} className="flex justify-start">
               <div className="max-w-[90%] space-y-2">
                 {m.content && (
-                  <div className="bg-gray-100 text-gray-900 rounded-2xl rounded-bl-sm px-4 py-2 text-sm whitespace-pre-wrap">
-                    {m.content}
+                  <div className="bg-gray-100 text-gray-900 rounded-2xl rounded-bl-sm px-4 py-2">
+                    <Markdown>{m.content}</Markdown>
                   </div>
                 )}
                 {invocations.map((inv) => (
