@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { dealsApi } from '../api';
 import { formatKES, formatDate, computeDiscount } from '../lib/format';
 
-const Dashboard = () => {
+const Dashboard = ({ onNavigate }) => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -82,10 +82,24 @@ const Dashboard = () => {
   return (
     <div className="space-y-6">
       <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg shadow-lg p-6 text-white">
-        <h1 className="text-2xl font-bold mb-2">Welcome to SmartBuy</h1>
-        <p className="text-blue-100">
-          Compare deals across Kenyan merchants. Track prices. Save more.
-        </p>
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="text-2xl font-bold mb-2">Welcome to SmartBuy</h1>
+            <p className="text-blue-100">
+              Compare deals across Kenyan merchants. Track prices. Save more.
+            </p>
+          </div>
+          <button
+            onClick={() => onNavigate?.('search')}
+            className="inline-flex items-center gap-2 bg-white text-blue-700 font-semibold px-4 py-2 rounded-md shadow hover:bg-blue-50"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            Compare Prices
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

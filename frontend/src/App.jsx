@@ -172,13 +172,16 @@ function AuthenticatedApp({ user, onLogout }) {
             </button>
             <button
               onClick={() => handleNavigation('search')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              className={`relative py-4 px-1 border-b-2 font-medium text-sm ${
                 currentView === 'search'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
               Compare Prices
+              <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-700 uppercase tracking-wide">
+                New
+              </span>
             </button>
             <button
               onClick={() => handleNavigation('deals')}
@@ -196,7 +199,9 @@ function AuthenticatedApp({ user, onLogout }) {
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
-          {currentView === 'dashboard' && <Dashboard deals={allDeals} />}
+          {currentView === 'dashboard' && (
+            <Dashboard deals={allDeals} onNavigate={handleNavigation} />
+          )}
 
           {currentView === 'search' && <SearchView />}
 
