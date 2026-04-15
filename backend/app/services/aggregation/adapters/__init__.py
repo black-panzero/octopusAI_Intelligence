@@ -1,24 +1,14 @@
 """
-Registry of available merchant adapters.
+Real-merchant adapter registry.
 
-To add a new merchant: create an adapter file, import it here, and append
-an instance to `DEFAULT_ADAPTERS`. The AggregationService will pick it up.
+Empty by default — the search endpoint now reads from the seeded DB
+catalog (app/db/seed.py). To plug a live scraper in later:
+  1. Create <slug>.py implementing MerchantAdapter.search()
+  2. Append an instance to `ADAPTERS` below
+  3. Wire a background job that calls each adapter on a schedule and
+     INSERTs PriceSnapshot rows — the catalog service will surface
+     them automatically.
 """
-from app.services.aggregation.adapters.carrefour import MockCarrefourAdapter
-from app.services.aggregation.adapters.naivas import MockNaivasAdapter
-from app.services.aggregation.adapters.quickmart import MockQuickmartAdapter
 from app.services.aggregation.base import MerchantAdapter
 
-
-DEFAULT_ADAPTERS: list[MerchantAdapter] = [
-    MockNaivasAdapter(),
-    MockCarrefourAdapter(),
-    MockQuickmartAdapter(),
-]
-
-__all__ = [
-    "DEFAULT_ADAPTERS",
-    "MockNaivasAdapter",
-    "MockCarrefourAdapter",
-    "MockQuickmartAdapter",
-]
+ADAPTERS: list[MerchantAdapter] = []

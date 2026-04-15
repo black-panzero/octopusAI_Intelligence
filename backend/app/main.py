@@ -14,8 +14,10 @@ from fastapi.responses import JSONResponse
 from app.core.config import get_settings
 from app.db.database import create_tables, get_database
 from app.routers.auth import router as auth_router
+from app.routers.cart import router as cart_router
 from app.routers.deals import router as deals_router
 from app.routers.products import router as products_router
+from app.routers.rules import router as rules_router
 
 # Configure structured logging
 structlog.configure(
@@ -105,6 +107,16 @@ def create_app() -> FastAPI:
         products_router,
         prefix="/api/v1/products",
         tags=["products"]
+    )
+    app.include_router(
+        cart_router,
+        prefix="/api/v1/cart",
+        tags=["cart"]
+    )
+    app.include_router(
+        rules_router,
+        prefix="/api/v1/rules",
+        tags=["rules"]
     )
 
     @app.get("/", response_class=JSONResponse)

@@ -1,10 +1,66 @@
 // src/components/search/ProductResultCard.jsx
-import React from 'react';
+import React, { useState } from 'react';
+import toast from 'react-hot-toast';
+import { rulesApi } from '../../api';
+import { useCartStore } from '../../stores/cartStore';
 import { formatKES } from '../../lib/format';
 
 const ProductResultCard = ({ result }) => {
   const { product, offers, min_price, max_price, best_merchant, savings_pct } = result;
   const hasSavings = savings_pct > 0;
+  const addToCart = useCartStore((s) => s.add);
+
+  const [busyOffer, setBusyOffer] = useState(null);
+  const [trackOpen, setTrackOpen] = useState(false);
+  const [targetPrice, setTargetPrice] = useState(String(Math.round(min_price * 0.95)));
+  const [trackAction, setTrackAction] = useState('alert');
+  const [tracking, setTracking] = useState(false);
+
+  // Offline demo results have string IDs like "offline-0" — skip mutations for those.
+  const isPersisted = typeof product.id === 'number';
+
+  const handleAdd = async (offer) => {
+    if (!isPersisted) {
+      toast.error('This is an offline demo row — start the backend to add to cart');
+      return;
+    }
+    setBusyOffer(offer.merchant_slug);
+    try {
+      await addToCart({
+        product_id: product.id,
+        merchant_id: offer.merchant_id,
+        quantity: 1,
+      });
+      toast.success(`Added "${product.display_name}" from ${offer.merchant}`);
+    } catch (err) {
+      toast.error(err?.response?.data?.detail || 'Could not add to cart');
+    } finally {
+      setBusyOffer(null);
+    }
+  };
+
+  const handleTrack = async (e) => {
+    e.preventDefault();
+    if (!isPersisted) {
+      toast.error('This is an offline demo row — start the backend to track it');
+      return;
+    }
+    setTracking(true);
+    try {
+      const parsed = targetPrice === '' ? null : Number(targetPrice);
+      await rulesApi.create({
+        product_id: product.id,
+        action: trackAction,
+        target_price: Number.isFinite(parsed) ? parsed : null,
+      });
+      toast.success('Rule saved — visit Tracking to manage');
+      setTrackOpen(false);
+    } catch (err) {
+      toast.error(err?.response?.data?.detail || 'Could not save rule');
+    } finally {
+      setTracking(false);
+    }
+  };
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow">
@@ -32,9 +88,10 @@ const ProductResultCard = ({ result }) => {
         </div>
       )}
 
-      <div className="divide-y divide-gray-100 border border-gray-100 rounded-md">
+      <div className="divide-y divide-gray-100 border border-gray-100 rounded-md mb-3">
         {offers.map((offer, idx) => {
           const isBest = offer.price === min_price;
+          const isBusy = busyOffer === offer.merchant_slug;
           return (
             <div
               key={`${offer.merchant_slug}-${idx}`}
@@ -61,6 +118,17 @@ const ProductResultCard = ({ result }) => {
                 <span className={`font-semibold ${isBest ? 'text-green-700' : 'text-gray-700'}`}>
                   {formatKES(offer.price)}
                 </span>
+                <button
+                  onClick={() => handleAdd(offer)}
+                  disabled={isBusy}
+                  className={`text-xs font-medium px-2 py-1 rounded-md ${
+                    isBusy
+                      ? 'bg-gray-200 text-gray-500'
+                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                  }`}
+                >
+                  {isBusy ? '…' : 'Add'}
+                </button>
                 {offer.url && (
                   <a
                     href={offer.url}
@@ -68,7 +136,7 @@ const ProductResultCard = ({ result }) => {
                     rel="noopener noreferrer"
                     className="text-xs text-blue-600 hover:text-blue-800"
                   >
-                    Open →
+                    Open ↗
                   </a>
                 )}
               </div>
@@ -76,6 +144,53 @@ const ProductResultCard = ({ result }) => {
           );
         })}
       </div>
+
+      <div className="flex items-center justify-between">
+        <button
+          onClick={() => setTrackOpen((v) => !v)}
+          className="text-xs font-medium text-emerald-700 hover:text-emerald-900"
+        >
+          {trackOpen ? '✕ Cancel tracking' : '★ Track price'}
+        </button>
+      </div>
+
+      {trackOpen && (
+        <form onSubmit={handleTrack} className="mt-3 bg-emerald-50 border border-emerald-200 rounded-md p-3 space-y-2">
+          <div className="grid grid-cols-2 gap-2">
+            <label className="text-xs text-emerald-900">
+              Target price (KES)
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={targetPrice}
+                onChange={(e) => setTargetPrice(e.target.value)}
+                className="mt-1 w-full px-2 py-1 border border-emerald-300 rounded focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+            </label>
+            <label className="text-xs text-emerald-900">
+              Action
+              <select
+                value={trackAction}
+                onChange={(e) => setTrackAction(e.target.value)}
+                className="mt-1 w-full px-2 py-1 border border-emerald-300 rounded focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              >
+                <option value="alert">Alert me</option>
+                <option value="add_to_cart">Auto add to cart</option>
+              </select>
+            </label>
+          </div>
+          <button
+            type="submit"
+            disabled={tracking}
+            className={`w-full text-sm font-medium py-2 rounded ${
+              tracking ? 'bg-emerald-300 text-white' : 'bg-emerald-600 text-white hover:bg-emerald-700'
+            }`}
+          >
+            {tracking ? 'Saving…' : 'Save rule'}
+          </button>
+        </form>
+      )}
     </div>
   );
 };

@@ -1,7 +1,7 @@
 // src/components/Header.jsx
 import React, { useState, useRef, useEffect } from 'react';
 
-const Header = ({ onAddDeal, user, onLogout }) => {
+const Header = ({ onAddDeal, user, onLogout, cartCount = 0, onOpenCart }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -37,6 +37,22 @@ const Header = ({ onAddDeal, user, onLogout }) => {
 
           {/* Actions */}
           <div className="flex items-center space-x-3">
+            <button
+              onClick={onOpenCart}
+              className="relative p-2 text-gray-600 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 rounded-full"
+              aria-label="Open cart"
+            >
+              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.4-8M7 13l-2 6h14m-9 4a1 1 0 11-2 0 1 1 0 012 0zm8 0a1 1 0 11-2 0 1 1 0 012 0z" />
+              </svg>
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-blue-600 text-white text-[10px] font-semibold rounded-full flex items-center justify-center px-1">
+                  {cartCount}
+                </span>
+              )}
+            </button>
+
             <button
               onClick={onAddDeal}
               className="hidden sm:inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"

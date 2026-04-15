@@ -69,6 +69,31 @@ export const productsApi = {
 };
 
 // -----------------------------
+// Cart
+// -----------------------------
+export const cartApi = {
+  get: async () => (await api.get('/cart/')).data,
+  addItem: async ({ product_id, merchant_id, quantity = 1 }) =>
+    (await api.post('/cart/items', { product_id, merchant_id, quantity })).data,
+  updateQuantity: async (item_id, quantity) =>
+    (await api.patch(`/cart/items/${item_id}`, { quantity })).data,
+  removeItem: async (item_id) =>
+    (await api.delete(`/cart/items/${item_id}`)).data,
+  clear: async () => (await api.delete('/cart/')).data,
+};
+
+// -----------------------------
+// Rules (price tracking + automation)
+// -----------------------------
+export const rulesApi = {
+  list: async () => (await api.get('/rules/')).data,
+  create: async ({ product_id, action = 'alert', target_price = null }) =>
+    (await api.post('/rules/', { product_id, action, target_price })).data,
+  delete: async (rule_id) => (await api.delete(`/rules/${rule_id}`)).data,
+  evaluate: async () => (await api.post('/rules/evaluate')).data,
+};
+
+// -----------------------------
 // Deals
 // -----------------------------
 export const dealsApi = {

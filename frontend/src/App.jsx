@@ -8,12 +8,14 @@ import DealForm from './components/deals/DealForm';
 import DealDetails from './components/deals/DealDetails';
 import DealFilters from './components/deals/DealFilters';
 import SearchView from './components/search/SearchView';
+import CartView from './components/cart/CartView';
+import RulesView from './components/rules/RulesView';
 import AuthScreen from './components/auth/AuthScreen';
 import { authApi, dealsApi } from './api';
 import { useAuthStore } from './stores/authStore';
+import { useCartStore } from './stores/cartStore';
 import './App.css';
 
-// Normalize different backend list-response shapes.
 const parseDealsResponse = (data) => {
   if (Array.isArray(data?.results)) return data.results;
   if (Array.isArray(data?.deals)) return data.deals;
@@ -21,7 +23,7 @@ const parseDealsResponse = (data) => {
 };
 
 function AuthenticatedApp({ user, onLogout }) {
-  const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard' | 'deals' | 'add-deal'
+  const [currentView, setCurrentView] = useState('dashboard');
   const [allDeals, setAllDeals] = useState([]);
   const [filteredDeals, setFilteredDeals] = useState([]);
   const [selectedDeal, setSelectedDeal] = useState(null);
@@ -30,11 +32,20 @@ function AuthenticatedApp({ user, onLogout }) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showDealDetails, setShowDealDetails] = useState(false);
 
+  const cartItemCount = useCartStore((s) => s.cart.item_count);
+  const refreshCart = useCartStore((s) => s.refresh);
+  const resetCart = useCartStore((s) => s.reset);
+
+  // Hydrate cart once on boot so the header badge is accurate.
+  useEffect(() => { refreshCart(); }, [refreshCart]);
+
+  // Refresh cart whenever the user enters the Cart view.
   useEffect(() => {
-    if (currentView === 'deals' || currentView === 'dashboard') {
-      fetchAllDeals();
-    }
-    // Search view manages its own data — no prefetch here.
+    if (currentView === 'cart') refreshCart();
+  }, [currentView, refreshCart]);
+
+  useEffect(() => {
+    if (currentView === 'deals' || currentView === 'dashboard') fetchAllDeals();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentView]);
 
@@ -43,26 +54,24 @@ function AuthenticatedApp({ user, onLogout }) {
       setLoading(true);
       setError(null);
       const data = await dealsApi.getAllDeals({ page: 1, size: 20 });
-      const dealsArray = parseDealsResponse(data);
-      setAllDeals(dealsArray);
-      setFilteredDeals(dealsArray);
+      const arr = parseDealsResponse(data);
+      setAllDeals(arr);
+      setFilteredDeals(arr);
     } catch (err) {
-      setError('Failed to fetch deals. Please check if the backend server is running.');
-      console.error('Error fetching deals:', err);
+      setError('Failed to fetch deals. Please check if the backend is running.');
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchDealsForFilters = async (queryParams) => {
+  const fetchDealsForFilters = async (params) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await dealsApi.getAllDeals({ page: 1, size: 20, ...queryParams });
+      const data = await dealsApi.getAllDeals({ page: 1, size: 20, ...params });
       return parseDealsResponse(data);
     } catch (err) {
-      setError('Failed to fetch deals. Please check if the backend server is running.');
-      console.error('Error fetching deals (filters):', err);
+      setError('Failed to fetch deals. Please check if the backend is running.');
       return [];
     } finally {
       setLoading(false);
@@ -73,18 +82,14 @@ function AuthenticatedApp({ user, onLogout }) {
     try {
       setLoading(true);
       const newDeal = await dealsApi.createDeal(dealData);
-      if (!newDeal || typeof newDeal !== 'object') {
-        throw new Error('Unexpected API payload for createDeal');
-      }
       const updated = [newDeal, ...allDeals];
       setAllDeals(updated);
       setFilteredDeals(updated);
       setShowAddForm(false);
       setCurrentView('deals');
-      toast.success('Deal created successfully!', { duration: 5000 });
+      toast.success('Deal created!');
     } catch (err) {
-      console.error('Error creating deal:', err);
-      toast.error('Failed to create deal. Please try again.');
+      toast.error('Failed to create deal.');
     } finally {
       setLoading(false);
     }
@@ -95,7 +100,6 @@ function AuthenticatedApp({ user, onLogout }) {
     if (filters.merchant) backendParams.merchant = filters.merchant;
     if (filters.category) backendParams.category = filters.category;
     if (filters.isActive === 'true') backendParams.active_only = true;
-
     const wantsInactiveOnly = filters.isActive === 'false';
     if (wantsInactiveOnly) backendParams.include_expired = true;
 
@@ -103,27 +107,22 @@ function AuthenticatedApp({ user, onLogout }) {
     setAllDeals(fetched);
 
     let final = [...fetched];
-
     if (filters.search) {
       const term = filters.search.toLowerCase();
       final = final.filter(
-        (deal) =>
-          deal.product_name?.toLowerCase().includes(term) ||
-          deal.description?.toLowerCase().includes(term),
+        (d) => d.product_name?.toLowerCase().includes(term) ||
+               d.description?.toLowerCase().includes(term),
       );
     }
-
     if (filters.minPrice) {
       const min = parseFloat(filters.minPrice);
-      if (!Number.isNaN(min)) final = final.filter((deal) => Number(deal.price) >= min);
+      if (!Number.isNaN(min)) final = final.filter((d) => Number(d.price) >= min);
     }
     if (filters.maxPrice) {
       const max = parseFloat(filters.maxPrice);
-      if (!Number.isNaN(max)) final = final.filter((deal) => Number(deal.price) <= max);
+      if (!Number.isNaN(max)) final = final.filter((d) => Number(d.price) <= max);
     }
-
-    if (wantsInactiveOnly) final = final.filter((deal) => deal.is_active === false);
-
+    if (wantsInactiveOnly) final = final.filter((d) => d.is_active === false);
     setFilteredDeals(final);
   };
 
@@ -143,67 +142,70 @@ function AuthenticatedApp({ user, onLogout }) {
     setCurrentView('add-deal');
   };
 
-  const handleCloseAddForm = () => {
-    setShowAddForm(false);
-    setCurrentView('deals');
+  const handleLogout = () => {
+    resetCart();
+    onLogout();
   };
 
-  const handleCloseDealDetails = () => {
-    setShowDealDetails(false);
-    setSelectedDeal(null);
-  };
+  const tabs = [
+    { key: 'dashboard', label: 'Dashboard' },
+    { key: 'search',    label: 'Compare Prices', badge: 'NEW' },
+    { key: 'cart',      label: 'Cart', count: cartItemCount },
+    { key: 'tracking',  label: 'Tracking' },
+    { key: 'deals',     label: `Deals (${allDeals.length})`, match: ['deals', 'add-deal'] },
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header onAddDeal={handleAddDeal} user={user} onLogout={onLogout} />
+      <Header
+        onAddDeal={handleAddDeal}
+        user={user}
+        onLogout={handleLogout}
+        cartCount={cartItemCount}
+        onOpenCart={() => handleNavigation('cart')}
+      />
 
       <nav className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex space-x-8">
-            <button
-              onClick={() => handleNavigation('dashboard')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                currentView === 'dashboard'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              Dashboard
-            </button>
-            <button
-              onClick={() => handleNavigation('search')}
-              className={`relative py-4 px-1 border-b-2 font-medium text-sm ${
-                currentView === 'search'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              Compare Prices
-              <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-700 uppercase tracking-wide">
-                New
-              </span>
-            </button>
-            <button
-              onClick={() => handleNavigation('deals')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                currentView === 'deals' || currentView === 'add-deal'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              Deals ({allDeals.length})
-            </button>
+          <div className="flex space-x-6 overflow-x-auto">
+            {tabs.map((tab) => {
+              const active = tab.match
+                ? tab.match.includes(currentView)
+                : currentView === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => handleNavigation(tab.key)}
+                  className={`relative py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+                    active
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  {tab.label}
+                  {tab.badge && (
+                    <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-700 uppercase tracking-wide">
+                      {tab.badge}
+                    </span>
+                  )}
+                  {tab.count > 0 && (
+                    <span className="ml-2 inline-flex items-center justify-center text-[10px] font-semibold bg-blue-600 text-white rounded-full min-w-[18px] h-[18px] px-1">
+                      {tab.count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
       </nav>
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
-          {currentView === 'dashboard' && (
-            <Dashboard deals={allDeals} onNavigate={handleNavigation} />
-          )}
-
+          {currentView === 'dashboard' && <Dashboard deals={allDeals} onNavigate={handleNavigation} />}
           {currentView === 'search' && <SearchView />}
+          {currentView === 'cart' && <CartView onNavigate={handleNavigation} />}
+          {currentView === 'tracking' && <RulesView onNavigate={handleNavigation} />}
 
           {currentView === 'deals' && (
             <div className="space-y-6">
@@ -211,7 +213,7 @@ function AuthenticatedApp({ user, onLogout }) {
                 <h1 className="text-2xl font-bold text-gray-900">All Deals</h1>
                 <button
                   onClick={handleAddDeal}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
                 >
                   <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -219,9 +221,7 @@ function AuthenticatedApp({ user, onLogout }) {
                   Add New Deal
                 </button>
               </div>
-
               <DealFilters onFiltersChange={handleFiltersChange} loading={loading} />
-
               <DealList
                 deals={filteredDeals}
                 loading={loading}
@@ -235,20 +235,17 @@ function AuthenticatedApp({ user, onLogout }) {
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold text-gray-900">Add New Deal</h1>
-                <button
-                  onClick={handleCloseAddForm}
-                  className="text-gray-400 hover:text-gray-600"
-                >
+                <button onClick={() => { setShowAddForm(false); setCurrentView('deals'); }}
+                        className="text-gray-400 hover:text-gray-600">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
-
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <DealForm
                   onSubmit={handleCreateDeal}
-                  onCancel={handleCloseAddForm}
+                  onCancel={() => { setShowAddForm(false); setCurrentView('deals'); }}
                   isLoading={loading}
                 />
               </div>
@@ -260,21 +257,14 @@ function AuthenticatedApp({ user, onLogout }) {
       <DealDetails
         deal={selectedDeal}
         isOpen={showDealDetails}
-        onClose={handleCloseDealDetails}
+        onClose={() => { setShowDealDetails(false); setSelectedDeal(null); }}
       />
 
-      {error && (
+      {error && currentView === 'deals' && (
         <div className="fixed bottom-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg">
           <div className="flex items-center">
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
             {error}
-            <button onClick={() => setError(null)} className="ml-4 text-red-500 hover:text-red-700">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            <button onClick={() => setError(null)} className="ml-4 text-red-500 hover:text-red-700">✕</button>
           </div>
         </div>
       )}
@@ -288,7 +278,6 @@ function App() {
   const setUser = useAuthStore((s) => s.setUser);
   const logout = useAuthStore((s) => s.logout);
 
-  // If we have a token but no cached user (fresh reload), hydrate from /me.
   useEffect(() => {
     if (token && !user) {
       authApi.me().then(setUser).catch(() => logout());
