@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { useCompareStore } from '../../stores/compareStore';
 import { useCartStore } from '../../stores/cartStore';
 import { formatKES, formatRating } from '../../lib/format';
+import { extractErrorMessage } from '../../lib/errors';
 
 // All category-specific keys that appear across the selected products'
 // `specs` objects, flattened into the attribute-comparison rows.
@@ -83,8 +84,11 @@ const CompareView = () => {
   ];
 
   const handleAddBest = async (r) => {
-    const best = r.offers[0];
-    if (!best) return;
+    const best = r.offers?.[0];
+    if (!best?.merchant_id) {
+      toast.error('Best offer is missing merchant id — refresh and retry.');
+      return;
+    }
     try {
       await addToCart({
         product_id: r.product.id,
@@ -93,7 +97,7 @@ const CompareView = () => {
       });
       toast.success(`Added ${r.product.display_name} @ ${best.merchant}`);
     } catch (err) {
-      toast.error('Could not add to cart');
+      toast.error(extractErrorMessage(err, 'Could not add to cart'));
     }
   };
 

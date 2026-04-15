@@ -4,6 +4,7 @@
 // mutation round-trips through the API and replaces the cached cart.
 import { create } from 'zustand';
 import { cartApi } from '../api';
+import { extractErrorMessage } from '../lib/errors';
 
 const empty = {
   id: null,
@@ -20,14 +21,13 @@ export const useCartStore = create((set, get) => ({
   loading: false,
   error: null,
 
-  // Hydrate from the backend — call after login and once on app boot.
   refresh: async () => {
     set({ loading: true, error: null });
     try {
       const cart = await cartApi.get();
       set({ cart, loading: false });
     } catch (err) {
-      set({ error: err?.response?.data?.detail || 'Failed to load cart', loading: false });
+      set({ error: extractErrorMessage(err, 'Failed to load cart'), loading: false });
     }
   },
 
@@ -38,7 +38,7 @@ export const useCartStore = create((set, get) => ({
       set({ cart, loading: false });
       return cart;
     } catch (err) {
-      set({ error: err?.response?.data?.detail || 'Failed to add item', loading: false });
+      set({ error: extractErrorMessage(err, 'Failed to add item'), loading: false });
       throw err;
     }
   },
@@ -49,7 +49,7 @@ export const useCartStore = create((set, get) => ({
       const cart = await cartApi.updateQuantity(item_id, quantity);
       set({ cart });
     } catch (err) {
-      set({ cart: prev, error: 'Failed to update quantity' });
+      set({ cart: prev, error: extractErrorMessage(err, 'Failed to update quantity') });
     }
   },
 
@@ -58,7 +58,7 @@ export const useCartStore = create((set, get) => ({
       const cart = await cartApi.removeItem(item_id);
       set({ cart });
     } catch (err) {
-      set({ error: 'Failed to remove item' });
+      set({ error: extractErrorMessage(err, 'Failed to remove item') });
     }
   },
 
@@ -67,10 +67,10 @@ export const useCartStore = create((set, get) => ({
       const cart = await cartApi.clear();
       set({ cart });
     } catch (err) {
-      set({ error: 'Failed to clear cart' });
+      set({ error: extractErrorMessage(err, 'Failed to clear cart') });
     }
   },
 
-  // Called on logout.
   reset: () => set({ cart: empty, loading: false, error: null }),
 }));
+

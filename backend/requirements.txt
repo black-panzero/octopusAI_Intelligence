@@ -11,6 +11,7 @@ httpx
 structlog
 bcrypt
 pyjwt
+openai
 pytest
 pytest-asyncio
 pytest-cov

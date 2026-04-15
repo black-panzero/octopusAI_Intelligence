@@ -69,6 +69,15 @@ export const productsApi = {
 };
 
 // -----------------------------
+// Chat / AI assistant
+// -----------------------------
+export const chatApi = {
+  status: async () => (await api.get('/chat/status')).data,
+  send: async (messages) =>
+    (await api.post('/chat/', { messages })).data,
+};
+
+// -----------------------------
 // Cart
 // -----------------------------
 export const cartApi = {

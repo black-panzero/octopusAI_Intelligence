@@ -12,6 +12,7 @@ class ProductOffer(BaseModel):
 
     merchant: str
     merchant_slug: str
+    merchant_id: int
     price: float
     currency: str = "KES"
     url: Optional[str] = None

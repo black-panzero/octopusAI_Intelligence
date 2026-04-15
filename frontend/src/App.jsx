@@ -10,6 +10,7 @@ import DealFilters from './components/deals/DealFilters';
 import SearchView from './components/search/SearchView';
 import CartView from './components/cart/CartView';
 import RulesView from './components/rules/RulesView';
+import ChatView from './components/chat/ChatView';
 import AuthScreen from './components/auth/AuthScreen';
 import { authApi, dealsApi } from './api';
 import { useAuthStore } from './stores/authStore';
@@ -149,7 +150,8 @@ function AuthenticatedApp({ user, onLogout }) {
 
   const tabs = [
     { key: 'dashboard', label: 'Dashboard' },
-    { key: 'search',    label: 'Compare Prices', badge: 'NEW' },
+    { key: 'chat',      label: 'Chat AI', badge: 'NEW' },
+    { key: 'search',    label: 'Compare Prices' },
     { key: 'cart',      label: 'Cart', count: cartItemCount },
     { key: 'tracking',  label: 'Tracking' },
     { key: 'deals',     label: `Deals (${allDeals.length})`, match: ['deals', 'add-deal'] },
@@ -203,6 +205,7 @@ function AuthenticatedApp({ user, onLogout }) {
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           {currentView === 'dashboard' && <Dashboard deals={allDeals} onNavigate={handleNavigation} />}
+          {currentView === 'chat' && <ChatView />}
           {currentView === 'search' && <SearchView />}
           {currentView === 'cart' && <CartView onNavigate={handleNavigation} />}
           {currentView === 'tracking' && <RulesView onNavigate={handleNavigation} />}

@@ -52,6 +52,22 @@ class Settings(BaseSettings):
         description="Access token lifetime in minutes (default 24h)",
     )
 
+    # LLM settings — OpenAI-compatible providers (Groq, OpenRouter, OpenAI, ...)
+    llm_provider: str = Field(default="groq", description="groq | openrouter | openai")
+    llm_api_key: str = Field(default="", description="API key for the selected LLM provider")
+    llm_model: str = Field(
+        default="llama-3.3-70b-versatile",
+        description="Model id (groq: llama-3.3-70b-versatile; openrouter: openai/gpt-4o-mini; openai: gpt-4o-mini)",
+    )
+    llm_base_url: str = Field(
+        default="",
+        description="Override the provider base URL (auto-derived if empty)",
+    )
+    llm_max_tool_rounds: int = Field(
+        default=5,
+        description="Maximum tool-calling rounds per chat turn",
+    )
+
     # CORS settings
     backend_cors_origins: Union[str, List[AnyHttpUrl]] = Field(
         default=[],

@@ -15,6 +15,7 @@ from app.core.config import get_settings
 from app.db.database import create_tables, get_database
 from app.routers.auth import router as auth_router
 from app.routers.cart import router as cart_router
+from app.routers.chat import router as chat_router
 from app.routers.deals import router as deals_router
 from app.routers.products import router as products_router
 from app.routers.rules import router as rules_router
@@ -117,6 +118,11 @@ def create_app() -> FastAPI:
         rules_router,
         prefix="/api/v1/rules",
         tags=["rules"]
+    )
+    app.include_router(
+        chat_router,
+        prefix="/api/v1/chat",
+        tags=["chat"]
     )
 
     @app.get("/", response_class=JSONResponse)

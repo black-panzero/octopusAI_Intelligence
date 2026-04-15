@@ -5,6 +5,7 @@ import { rulesApi } from '../../api';
 import { useCartStore } from '../../stores/cartStore';
 import { useCompareStore } from '../../stores/compareStore';
 import { formatKES, formatRating } from '../../lib/format';
+import { extractErrorMessage } from '../../lib/errors';
 
 const ProductResultCard = ({ result }) => {
   const { product, offers, min_price, max_price, best_merchant, savings_pct } = result;
@@ -25,6 +26,10 @@ const ProductResultCard = ({ result }) => {
   const [tracking, setTracking] = useState(false);
 
   const handleAdd = async (offer) => {
+    if (!offer?.merchant_id) {
+      toast.error('This offer is missing a merchant id — refresh the page.');
+      return;
+    }
     setBusyOffer(offer.merchant_slug);
     try {
       await addToCart({
@@ -34,7 +39,7 @@ const ProductResultCard = ({ result }) => {
       });
       toast.success(`Added "${product.display_name}" from ${offer.merchant}`);
     } catch (err) {
-      toast.error(err?.response?.data?.detail || 'Could not add to cart');
+      toast.error(extractErrorMessage(err, 'Could not add to cart'));
     } finally {
       setBusyOffer(null);
     }
@@ -53,7 +58,7 @@ const ProductResultCard = ({ result }) => {
       toast.success('Rule saved — open the Tracking tab to manage');
       setTrackOpen(false);
     } catch (err) {
-      toast.error(err?.response?.data?.detail || 'Could not save rule');
+      toast.error(extractErrorMessage(err, 'Could not save rule'));
     } finally {
       setTracking(false);
     }
