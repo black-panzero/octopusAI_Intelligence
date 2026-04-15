@@ -71,17 +71,21 @@ def create_app() -> FastAPI:
         debug=settings.debug
     )
 
-    # Configure CORS for local development
-
-    origins = [
-        "http://localhost:3000",
-        "https://shiny-giggle-7vvjp5gv747xcrjww-3000.app.github.dev"
-    ]
+    # Configure CORS for local development + any GitHub Codespaces URL.
+    # The regex matches https://<codespace-name>-<port>.app.github.dev so the
+    # frontend at the forwarded :3000 URL can hit the backend without hardcoding
+    # a specific Codespace name.
+    codespaces_regex = (
+        r"^(https?://(localhost|127\.0\.0\.1)(:\d+)?"
+        r"|https://[a-z0-9-]+-\d+\.app\.github\.dev"
+        r"|https://[a-z0-9-]+-\d+\.githubpreview\.dev)$"
+    )
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=origins,
+        allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+        allow_origin_regex=codespaces_regex,
         allow_credentials=True,
-        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
         allow_headers=["*"],
     )
 
