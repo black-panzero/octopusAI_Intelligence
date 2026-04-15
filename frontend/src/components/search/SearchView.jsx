@@ -1,7 +1,9 @@
 // src/components/search/SearchView.jsx
 import React, { useRef, useState } from 'react';
 import { productsApi } from '../../api';
+import { useCompareStore } from '../../stores/compareStore';
 import ProductResultCard from './ProductResultCard';
+import CompareView from './CompareView';
 
 const SAMPLE_QUERIES = ['rice', 'oil', 'milk', 'tea', 'sugar', 'colgate', 'samsung', 'tissue'];
 
@@ -12,6 +14,12 @@ const SearchView = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const debounceRef = useRef(null);
+
+  const compareItems = useCompareStore((s) => s.items);
+  const compareOpen = useCompareStore((s) => s.open);
+  const openCompare = useCompareStore((s) => s.openView);
+  const clearCompare = useCompareStore((s) => s.clear);
+  const removeCompare = useCompareStore((s) => s.remove);
 
   const runSearch = async (raw) => {
     const q = raw.trim();
@@ -140,6 +148,42 @@ const SearchView = () => {
           <p className="text-sm">Type a query above or pick a sample to see cross-merchant prices.</p>
         </div>
       )}
+
+      {compareItems.length > 0 && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-gray-900 text-white rounded-full shadow-xl px-4 py-2 flex items-center gap-3">
+          <span className="text-sm">
+            {compareItems.length} selected
+          </span>
+          <div className="flex items-center gap-1">
+            {compareItems.map((r) => (
+              <button
+                key={r.product.id}
+                onClick={() => removeCompare(r.product.id)}
+                className="text-[10px] bg-white/10 hover:bg-white/20 rounded-full px-2 py-0.5"
+                title="Remove"
+              >
+                {r.product.display_name.slice(0, 20)} ✕
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={openCompare}
+            disabled={compareItems.length < 2}
+            className={`text-sm font-semibold px-3 py-1 rounded-full ${
+              compareItems.length < 2
+                ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                : 'bg-indigo-500 hover:bg-indigo-600'
+            }`}
+          >
+            Compare →
+          </button>
+          <button onClick={clearCompare} className="text-xs text-gray-300 hover:text-white">
+            Clear
+          </button>
+        </div>
+      )}
+
+      {compareOpen && <CompareView />}
     </div>
   );
 };

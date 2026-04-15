@@ -141,6 +141,12 @@ class DealResponse(DealBase):
     created_at: datetime = Field(description="When the deal was created")
     updated_at: datetime = Field(description="When the deal was last updated")
     is_active: bool = Field(description="Whether the deal is currently active")
+
+    # Links to the canonical catalog — populated on create by the
+    # deal sync service. Null for pre-unification rows that haven't
+    # yet been backfilled.
+    product_id: Optional[int] = Field(default=None)
+    merchant_id: Optional[int] = Field(default=None)
     
     # Computed fields
     @property

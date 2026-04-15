@@ -72,11 +72,17 @@ async def create_tables() -> None:
             # Create all tables
             await conn.run_sync(Base.metadata.create_all)
 
-        # Seed initial catalog if the DB is empty — so /products/search
-        # has real rows to return from first boot.
+        # 1. Apply additive schema migrations (SQLite-friendly) so new
+        #    columns on existing tables land without wiping the DB.
+        # 2. Seed the Kenyan catalog if anything is missing.
+        # 3. Backfill any legacy deals that don't yet link to a product.
+        from app.db.migrations import evolve_schema
         from app.db.seed import seed_if_empty
+        from app.services.deal_sync_service import backfill_deal_links
         async with AsyncSessionLocal() as session:
+            await evolve_schema(session)
             await seed_if_empty(session)
+            await backfill_deal_links(session)
         
         logger.info("Database tables created successfully")
     except Exception as e:

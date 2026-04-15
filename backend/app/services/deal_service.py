@@ -12,6 +12,7 @@ from sqlalchemy.orm import selectinload
 
 from app.db.models.deals import Deal
 from app.schemas.deals import DealCreate, DealUpdate
+from app.services.deal_sync_service import sync_deal_to_catalog
 
 logger = structlog.get_logger(__name__)
 
@@ -49,8 +50,23 @@ class DealService:
                 is_active=True
             )
 
-            # Add to session and commit
+            # Add to session and flush to get an id without committing yet.
             self.db.add(deal)
+            await self.db.flush()
+
+            # Mirror into the canonical catalog so this deal is searchable
+            # across /products/search and can be added to cart / tracked.
+            try:
+                await sync_deal_to_catalog(self.db, deal)
+            except Exception as sync_err:
+                # Catalog sync is best-effort — log but don't fail the deal.
+                logger.warning(
+                    "Deal catalog-sync failed",
+                    product_name=deal.product_name,
+                    merchant=deal.merchant,
+                    error=str(sync_err),
+                )
+
             await self.db.commit()
             await self.db.refresh(deal)
 
@@ -58,7 +74,9 @@ class DealService:
                 "Deal created successfully",
                 deal_id=deal.id,
                 product_name=deal.product_name,
-                merchant=deal.merchant
+                merchant=deal.merchant,
+                product_id=deal.product_id,
+                merchant_id=deal.merchant_id,
             )
 
             return deal

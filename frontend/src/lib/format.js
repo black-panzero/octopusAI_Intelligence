@@ -40,6 +40,13 @@ export const computeDiscount = (price, discount) => {
 };
 
 // Kenyan merchants used across filters and forms.
+export const formatRating = (rating, reviewCount) => {
+  if (rating == null) return '—';
+  const stars = '★'.repeat(Math.round(rating)) + '☆'.repeat(5 - Math.round(rating));
+  const count = reviewCount != null ? ` (${reviewCount.toLocaleString('en-KE')})` : '';
+  return `${stars} ${Number(rating).toFixed(1)}${count}`;
+};
+
 export const KENYA_MERCHANTS = [
   'Naivas',
   'Carrefour',

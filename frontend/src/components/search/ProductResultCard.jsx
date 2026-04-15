@@ -3,12 +3,20 @@ import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 import { rulesApi } from '../../api';
 import { useCartStore } from '../../stores/cartStore';
-import { formatKES } from '../../lib/format';
+import { useCompareStore } from '../../stores/compareStore';
+import { formatKES, formatRating } from '../../lib/format';
 
 const ProductResultCard = ({ result }) => {
   const { product, offers, min_price, max_price, best_merchant, savings_pct } = result;
   const hasSavings = savings_pct > 0;
   const addToCart = useCartStore((s) => s.add);
+
+  const toggleCompare = useCompareStore((s) => s.toggle);
+  const compareSelected = useCompareStore((s) =>
+    s.items.some((r) => r.product.id === product.id),
+  );
+  const compareCount = useCompareStore((s) => s.items.length);
+  const compareMax = useCompareStore((s) => s.max);
 
   const [busyOffer, setBusyOffer] = useState(null);
   const [trackOpen, setTrackOpen] = useState(false);
@@ -16,14 +24,7 @@ const ProductResultCard = ({ result }) => {
   const [trackAction, setTrackAction] = useState('alert');
   const [tracking, setTracking] = useState(false);
 
-  // Offline demo results have string IDs like "offline-0" — skip mutations for those.
-  const isPersisted = typeof product.id === 'number';
-
   const handleAdd = async (offer) => {
-    if (!isPersisted) {
-      toast.error('This is an offline demo row — start the backend to add to cart');
-      return;
-    }
     setBusyOffer(offer.merchant_slug);
     try {
       await addToCart({
@@ -41,10 +42,6 @@ const ProductResultCard = ({ result }) => {
 
   const handleTrack = async (e) => {
     e.preventDefault();
-    if (!isPersisted) {
-      toast.error('This is an offline demo row — start the backend to track it');
-      return;
-    }
     setTracking(true);
     try {
       const parsed = targetPrice === '' ? null : Number(targetPrice);
@@ -53,7 +50,7 @@ const ProductResultCard = ({ result }) => {
         action: trackAction,
         target_price: Number.isFinite(parsed) ? parsed : null,
       });
-      toast.success('Rule saved — visit Tracking to manage');
+      toast.success('Rule saved — open the Tracking tab to manage');
       setTrackOpen(false);
     } catch (err) {
       toast.error(err?.response?.data?.detail || 'Could not save rule');
@@ -62,16 +59,37 @@ const ProductResultCard = ({ result }) => {
     }
   };
 
+  const handleCompare = () => {
+    if (!compareSelected && compareCount >= compareMax) {
+      toast.error(`You can compare up to ${compareMax} products at a time`);
+      return;
+    }
+    toggleCompare(result);
+  };
+
+  const meta = [
+    product.brand,
+    product.category,
+    product.size && `· ${product.size}`,
+  ].filter(Boolean).join(' ');
+
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow">
+    <div
+      className={`bg-white rounded-lg shadow-sm border p-5 transition-shadow hover:shadow-md ${
+        compareSelected ? 'border-indigo-400 ring-2 ring-indigo-200' : 'border-gray-200'
+      }`}
+    >
       <div className="flex items-start justify-between gap-4 mb-3">
         <div className="min-w-0">
           <h3 className="text-lg font-semibold text-gray-900 truncate">
             {product.display_name}
           </h3>
-          <p className="text-xs text-gray-500 truncate">
-            {[product.brand, product.category].filter(Boolean).join(' • ') || '—'}
-          </p>
+          <p className="text-xs text-gray-500 truncate">{meta || '—'}</p>
+          {product.rating != null && (
+            <p className="text-xs text-amber-600 mt-1">
+              {formatRating(product.rating, product.review_count)}
+            </p>
+          )}
         </div>
         <div className="text-right flex-shrink-0">
           <p className="text-xl font-bold text-blue-600">{formatKES(min_price)}</p>
@@ -95,7 +113,7 @@ const ProductResultCard = ({ result }) => {
           return (
             <div
               key={`${offer.merchant_slug}-${idx}`}
-              className={`flex items-center justify-between px-3 py-2 text-sm ${
+              className={`flex items-center justify-between gap-2 px-3 py-2 text-sm ${
                 isBest ? 'bg-green-50' : ''
               }`}
             >
@@ -108,26 +126,25 @@ const ProductResultCard = ({ result }) => {
                     Best
                   </span>
                 )}
-                {!offer.available && (
-                  <span className="text-[10px] uppercase tracking-wide bg-gray-200 text-gray-700 rounded px-1.5 py-0.5">
-                    Out of stock
-                  </span>
-                )}
               </div>
-              <div className="flex items-center gap-3 flex-shrink-0">
+              <div className="flex items-center gap-2 flex-shrink-0">
                 <span className={`font-semibold ${isBest ? 'text-green-700' : 'text-gray-700'}`}>
                   {formatKES(offer.price)}
                 </span>
                 <button
                   onClick={() => handleAdd(offer)}
                   disabled={isBusy}
-                  className={`text-xs font-medium px-2 py-1 rounded-md ${
+                  className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-md ${
                     isBusy
                       ? 'bg-gray-200 text-gray-500'
                       : 'bg-blue-600 text-white hover:bg-blue-700'
                   }`}
                 >
-                  {isBusy ? '…' : 'Add'}
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                      d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.4-8M7 13l-2 6h14" />
+                  </svg>
+                  {isBusy ? 'Adding…' : 'Add to cart'}
                 </button>
                 {offer.url && (
                   <a
@@ -135,8 +152,9 @@ const ProductResultCard = ({ result }) => {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-xs text-blue-600 hover:text-blue-800"
+                    title="Open merchant page"
                   >
-                    Open ↗
+                    ↗
                   </a>
                 )}
               </div>
@@ -145,7 +163,17 @@ const ProductResultCard = ({ result }) => {
         })}
       </div>
 
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
+        <button
+          onClick={handleCompare}
+          className={`text-xs font-medium px-2 py-1 rounded-md border ${
+            compareSelected
+              ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+              : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+          }`}
+        >
+          {compareSelected ? '✓ Selected to compare' : '+ Compare'}
+        </button>
         <button
           onClick={() => setTrackOpen((v) => !v)}
           className="text-xs font-medium text-emerald-700 hover:text-emerald-900"

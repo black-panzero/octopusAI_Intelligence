@@ -27,6 +27,11 @@ class ProductSummary(BaseModel):
     display_name: str
     brand: Optional[str] = None
     category: Optional[str] = None
+    size: Optional[str] = None
+    rating: Optional[float] = None
+    review_count: Optional[int] = None
+    image_url: Optional[str] = None
+    specs: Optional[dict] = None
 
 
 class ProductSearchResult(BaseModel):
