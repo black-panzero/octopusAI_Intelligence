@@ -11,10 +11,12 @@ import SearchView from './components/search/SearchView';
 import CartView from './components/cart/CartView';
 import RulesView from './components/rules/RulesView';
 import ChatView from './components/chat/ChatView';
+import FloatingChatWidget from './components/chat/FloatingChatWidget';
 import AuthScreen from './components/auth/AuthScreen';
 import { authApi, dealsApi } from './api';
 import { useAuthStore } from './stores/authStore';
 import { useCartStore } from './stores/cartStore';
+import { useChatStore } from './stores/chatStore';
 import './App.css';
 
 const parseDealsResponse = (data) => {
@@ -36,6 +38,7 @@ function AuthenticatedApp({ user, onLogout }) {
   const cartItemCount = useCartStore((s) => s.cart.item_count);
   const refreshCart = useCartStore((s) => s.refresh);
   const resetCart = useCartStore((s) => s.reset);
+  const resetChat = useChatStore((s) => s.reset);
 
   // Hydrate cart once on boot so the header badge is accurate.
   useEffect(() => { refreshCart(); }, [refreshCart]);
@@ -145,6 +148,7 @@ function AuthenticatedApp({ user, onLogout }) {
 
   const handleLogout = () => {
     resetCart();
+    resetChat();
     onLogout();
   };
 
@@ -271,6 +275,9 @@ function AuthenticatedApp({ user, onLogout }) {
           </div>
         </div>
       )}
+
+      {/* Floating AI assistant — hidden on the full Chat tab */}
+      <FloatingChatWidget hidden={currentView === 'chat'} />
     </div>
   );
 }
