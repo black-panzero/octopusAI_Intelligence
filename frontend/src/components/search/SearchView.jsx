@@ -63,7 +63,12 @@ const SearchView = () => {
       setScrapeSummary(summary);
       const succeeded = (summary?.per_scraper || []).filter((s) => s.ok).length;
       const total = (summary?.scrapers_ran || []).length;
-      toast.success(`Scraped ${succeeded}/${total} merchants — ${summary?.offers_persisted || 0} offers`);
+      const offers = summary?.offers_persisted || 0;
+      if (offers > 0) {
+        toast.success(`Found ${offers} fresh offer${offers === 1 ? '' : 's'} across ${succeeded}/${total} stores`);
+      } else {
+        toast(`Checked ${total} stores — try a broader search`);
+      }
       await runSearch(q, { forceLive: false });  // results are now fresh in the DB
     } catch (err) {
       toast.error(extractErrorMessage(err, 'Live refresh failed'));
@@ -166,25 +171,45 @@ const SearchView = () => {
         ))}
       </div>
 
-      {scrapeSummary && (
-        <div className="bg-fuchsia-50 border border-fuchsia-200 rounded-md p-3 text-xs text-fuchsia-800">
-          <p className="font-semibold mb-1">Live scrape summary</p>
-          <div className="flex flex-wrap gap-2">
-            {(scrapeSummary.per_scraper || []).map((s) => (
-              <span
-                key={s.slug}
-                className={`inline-flex items-center px-2 py-0.5 rounded-full ${
-                  s.ok
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-gray-200 text-gray-600'
-                }`}
-              >
-                {s.slug}: {s.ok ? `${s.count} offers` : 'no data'}
-              </span>
-            ))}
+      {scrapeSummary && (() => {
+        const per = scrapeSummary.per_scraper || [];
+        const ok = per.filter((s) => s.ok);
+        const total = per.length;
+        const okCount = ok.length;
+        const offersTotal = ok.reduce((acc, s) => acc + (s.count || 0), 0);
+
+        return (
+          <div className="bg-fuchsia-50 border border-fuchsia-200 rounded-md p-3 text-xs text-fuchsia-900">
+            <div className="flex items-center justify-between mb-1.5">
+              <p className="font-semibold">
+                {okCount > 0
+                  ? `Checked ${total} Kenyan stores · ${offersTotal} fresh offer${offersTotal === 1 ? '' : 's'} from ${okCount}`
+                  : `Swept ${total} Kenyan stores · nothing new surfaced`}
+              </p>
+              {scrapeSummary.cached && (
+                <span className="text-[10px] uppercase tracking-wide bg-fuchsia-100 px-1.5 py-0.5 rounded">
+                  Cached
+                </span>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {per.map((s) => (
+                <span
+                  key={s.slug}
+                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] ${
+                    s.ok
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-gray-100 text-gray-500'
+                  }`}
+                  title={s.ok ? `${s.count} offers` : 'Quiet this round'}
+                >
+                  {s.slug.replace(/_/g, ' ')}{s.ok ? ` · ${s.count}` : ''}
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {loading && (
         <div className="flex items-center gap-2 text-gray-600">

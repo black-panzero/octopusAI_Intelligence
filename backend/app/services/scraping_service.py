@@ -24,18 +24,30 @@ from app.db.models.price_snapshot import PriceSnapshot
 from app.db.models.product import Product
 from app.services.scrapers.base import BaseScraper, ScrapedOffer
 from app.services.scrapers.carrefour import CarrefourKeScraper
+from app.services.scrapers.copia import CopiaScraper
+from app.services.scrapers.hotpoint import HotpointScraper
 from app.services.scrapers.jumia_ke import JumiaKeScraper
+from app.services.scrapers.kilimall import KilimallScraper
+from app.services.scrapers.masoko import MasokoScraper
 from app.services.scrapers.naivas import NaivasScraper
+from app.services.scrapers.phone_place_kenya import PhonePlaceKenyaScraper
 from app.services.scrapers.quickmart import QuickmartScraper
 
 logger = structlog.get_logger(__name__)
 
 
+# The active scraper registry — every live Kenyan merchant SmartBuy knows.
+# Adding a new storefront is a one-liner: import + append.
 SCRAPERS: list[BaseScraper] = [
     NaivasScraper(),
     CarrefourKeScraper(),
     QuickmartScraper(),
     JumiaKeScraper(),
+    KilimallScraper(),
+    MasokoScraper(),
+    HotpointScraper(),
+    PhonePlaceKenyaScraper(),
+    CopiaScraper(),
 ]
 
 
