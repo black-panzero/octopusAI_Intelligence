@@ -16,21 +16,21 @@
   --bg-auth-dark:   linear-gradient(145deg, #0a0a0a 0%, #1a1510 40%, #0d0d0d 100%);
   --bg-auth-light:  linear-gradient(145deg, #f5d5e0 0%, #f0c0d4 50%, #e8b0c8 100%);
 
-  /* ── Glass surfaces (WHITE frosted) ─────────────────────────────────── */
-  --glass-bg:           rgba(255, 255, 255, 0.55);
-  --glass-bg-heavy:     rgba(255, 255, 255, 0.72);
-  --glass-bg-light:     rgba(255, 255, 255, 0.35);
-  --glass-bg-subtle:    rgba(255, 255, 255, 0.20);
-  --glass-bg-solid:     rgba(255, 255, 255, 0.85);
-  --glass-border:       rgba(255, 255, 255, 0.55);
-  --glass-border-subtle:rgba(255, 255, 255, 0.30);
-  --glass-shadow:       0 8px 32px rgba(0, 0, 0, 0.08);
-  --glass-shadow-lg:    0 16px 48px rgba(0, 0, 0, 0.12);
-  --glass-inset:        inset 0 1px 0 rgba(255, 255, 255, 0.60);
+  /* ── Glass surfaces (WHITE frosted — heavy frosting per Figma) ────── */
+  --glass-bg:           rgba(255, 255, 255, 0.62);
+  --glass-bg-heavy:     rgba(255, 255, 255, 0.78);
+  --glass-bg-light:     rgba(255, 255, 255, 0.40);
+  --glass-bg-subtle:    rgba(255, 255, 255, 0.25);
+  --glass-bg-solid:     rgba(255, 255, 255, 0.90);
+  --glass-border:       rgba(255, 255, 255, 0.65);
+  --glass-border-subtle:rgba(255, 255, 255, 0.35);
+  --glass-shadow:       0 8px 32px rgba(0, 0, 0, 0.06);
+  --glass-shadow-lg:    0 16px 48px rgba(0, 0, 0, 0.10);
+  --glass-inset:        inset 0 1px 0 rgba(255, 255, 255, 0.70);
 
-  --blur:        20px;
-  --blur-heavy:  40px;
-  --blur-light:  12px;
+  --blur:        24px;
+  --blur-heavy:  48px;
+  --blur-light:  16px;
 
   /* ── Brand ──────────────────────────────────────────────────────────── */
   --brand-green:       #2d8f3e;
