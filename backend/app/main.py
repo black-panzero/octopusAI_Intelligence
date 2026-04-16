@@ -21,6 +21,7 @@ from app.routers.deals import router as deals_router
 from app.routers.products import router as products_router
 from app.routers.recommendations import router as recommendations_router
 from app.routers.rules import router as rules_router
+from app.routers.merchant import router as merchant_router
 from app.routers.shopping_lists import router as shopping_lists_router
 from app.services.background_jobs import job_evaluate_all_rules, job_resolve_images
 from app.services.scheduler import BackgroundScheduler
@@ -149,6 +150,11 @@ def create_app() -> FastAPI:
         shopping_lists_router,
         prefix="/api/v1/shopping-lists",
         tags=["shopping-lists"]
+    )
+    app.include_router(
+        merchant_router,
+        prefix="/api/v1/merchant",
+        tags=["merchant"]
     )
     app.include_router(
         admin_router,

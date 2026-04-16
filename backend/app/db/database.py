@@ -81,10 +81,12 @@ async def create_tables() -> None:
         from app.db.migrations import evolve_schema
         from app.db.seed import seed_if_empty
         from app.services.deal_sync_service import backfill_deal_links
+        from app.services.auth_service import seed_admin
         async with AsyncSessionLocal() as session:
             await evolve_schema(session)
             await seed_if_empty(session)
             await backfill_deal_links(session)
+            await seed_admin(session)
         
         logger.info("Database tables created successfully")
     except Exception as e:

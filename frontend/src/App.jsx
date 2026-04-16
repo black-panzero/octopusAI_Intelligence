@@ -5,10 +5,6 @@ import toast, { Toaster } from 'react-hot-toast';
 
 // Views
 import Dashboard from './components/Dashboard';
-import DealList from './components/deals/DealList';
-import DealForm from './components/deals/DealForm';
-import DealDetails from './components/deals/DealDetails';
-import DealFilters from './components/deals/DealFilters';
 import SearchView from './components/search/SearchView';
 import CartView from './components/cart/CartView';
 import RulesView from './components/rules/RulesView';
@@ -16,6 +12,7 @@ import ChatView from './components/chat/ChatView';
 import FloatingChatWidget from './components/chat/FloatingChatWidget';
 import ShoppingListsView from './components/shoppingLists/ShoppingListsView';
 import AdminView from './components/admin/AdminView';
+import MerchantDashboard from './components/merchant/MerchantDashboard';
 import AuthScreen from './components/auth/AuthScreen';
 
 // Layout
@@ -57,14 +54,14 @@ const NAV_ICONS = {
 
 // ── Authenticated app ────────────────────────────────────────────────
 function AuthenticatedApp({ user, onLogout }) {
-  const [currentView, setCurrentView] = useState('chat');
+  const userRole = user?.role || 'user';
+  const defaultView = userRole === 'merchant' ? 'merchant' : userRole === 'admin' ? 'admin' : 'chat';
+  const [currentView, setCurrentView] = useState(defaultView);
   const [allDeals, setAllDeals] = useState([]);
   const [filteredDeals, setFilteredDeals] = useState([]);
   const [selectedDeal, setSelectedDeal] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [showDealDetails, setShowDealDetails] = useState(false);
 
   const cartItemCount = useCartStore((s) => s.cart.item_count);
   const refreshCart = useCartStore((s) => s.refresh);
@@ -127,21 +124,33 @@ function AuthenticatedApp({ user, onLogout }) {
     setFilteredDeals(final);
   };
 
-  const handleNavigation = (view) => { setCurrentView(view); setShowAddForm(false); setShowDealDetails(false); };
-  const handleAddDeal = () => { setShowAddForm(true); setCurrentView('add-deal'); };
+  const handleNavigation = (view) => { setCurrentView(view); };
   const handleLogout = () => { resetCart(); resetChat(); onLogout(); };
 
-  // Build nav items matching Figma sidebar order
-  const navItems = [
+  // Build nav items based on user role
+  const navItems = userRole === 'merchant' ? [
+    { key: 'merchant', label: 'Dashboard', icon: NAV_ICONS.deals },
+    { key: 'chat',     label: 'Assistant', icon: NAV_ICONS.chat },
+    { key: 'search',   label: 'Compare',   icon: NAV_ICONS.search },
+    { key: 'settings', label: 'Settings',  icon: NAV_ICONS.settings },
+  ] : userRole === 'admin' ? [
+    { key: 'admin',    label: 'Admin',     icon: NAV_ICONS.admin },
+    { key: 'chat',     label: 'Assistant', icon: NAV_ICONS.chat },
+    { key: 'search',   label: 'Compare',   icon: NAV_ICONS.search },
+    { key: 'cart',     label: 'Cart',      icon: NAV_ICONS.cart, count: cartItemCount },
+    { key: 'lists',    label: 'Lists',     icon: NAV_ICONS.lists },
+    { key: 'tracking', label: 'Watchlist',  icon: NAV_ICONS.tracking },
+    { key: 'wallet',   label: 'Wallet',    icon: NAV_ICONS.wallet },
+    { key: 'settings', label: 'Settings',  icon: NAV_ICONS.settings },
+  ] : [
+    // Standard user (shopper)
     { key: 'chat',     label: 'Assistant', icon: NAV_ICONS.chat },
     { key: 'search',   label: 'Compare',   icon: NAV_ICONS.search },
     { key: 'lists',    label: 'Lists',     icon: NAV_ICONS.lists },
     { key: 'cart',     label: 'Cart',      icon: NAV_ICONS.cart, count: cartItemCount },
     { key: 'tracking', label: 'Watchlist',  icon: NAV_ICONS.tracking },
     { key: 'wallet',   label: 'Wallet',    icon: NAV_ICONS.wallet },
-    { key: 'deals',    label: 'Deals',     icon: NAV_ICONS.deals, match: ['deals', 'add-deal'] },
     { key: 'settings', label: 'Settings',  icon: NAV_ICONS.settings },
-    ...(user?.is_superuser ? [{ key: 'admin', label: 'Admin', icon: NAV_ICONS.admin }] : []),
   ];
 
   return (
@@ -210,52 +219,10 @@ function AuthenticatedApp({ user, onLogout }) {
               <p>Settings page coming soon — automation rules, preferences, notifications.</p>
             </div>
           )}
-          {currentView === 'admin' && user?.is_superuser && <AdminView />}
-
-          {currentView === 'deals' && (
-            <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <h1 className="text-[var(--text-2xl)] font-bold" style={{ color: 'var(--text-primary)' }}>All Deals</h1>
-                <button onClick={handleAddDeal} className="glass-btn glass-btn-primary px-4 py-2 text-[var(--text-sm)]">
-                  + Add New Deal
-                </button>
-              </div>
-              <DealFilters onFiltersChange={handleFiltersChange} loading={loading} />
-              <DealList
-                deals={filteredDeals}
-                loading={loading}
-                error={error}
-                onDealSelect={(d) => { setSelectedDeal(d); setShowDealDetails(true); }}
-              />
-            </div>
-          )}
-
-          {currentView === 'add-deal' && showAddForm && (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h1 className="text-[var(--text-2xl)] font-bold" style={{ color: 'var(--text-primary)' }}>Add New Deal</h1>
-                <button onClick={() => { setShowAddForm(false); setCurrentView('deals'); }}
-                        className="w-8 h-8 rounded-full glass glass-border flex items-center justify-center"
-                        style={{ color: 'var(--text-tertiary)' }}>✕</button>
-              </div>
-              <div className="glass-card p-6">
-                <DealForm
-                  onSubmit={handleCreateDeal}
-                  onCancel={() => { setShowAddForm(false); setCurrentView('deals'); }}
-                  isLoading={loading}
-                />
-              </div>
-            </div>
-          )}
+          {currentView === 'admin' && (userRole === 'admin' || user?.is_superuser) && <AdminView />}
+          {currentView === 'merchant' && userRole === 'merchant' && <MerchantDashboard />}
         </div>
       </main>
-
-      {/* Deal details modal */}
-      <DealDetails
-        deal={selectedDeal}
-        isOpen={showDealDetails}
-        onClose={() => { setShowDealDetails(false); setSelectedDeal(null); }}
-      />
 
       {/* Floating AI bubble — hidden on the Chat view */}
       <FloatingChatWidget hidden={currentView === 'chat'} />

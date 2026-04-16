@@ -86,6 +86,22 @@ export const recommendationsApi = {
 };
 
 // -----------------------------
+// Merchant
+// -----------------------------
+export const merchantApi = {
+  dashboard: async () => (await api.get('/merchant/dashboard')).data,
+  listProducts: async ({ page = 1, size = 30, q = '' } = {}) => {
+    const params = { page, size };
+    if (q) params.q = q;
+    return (await api.get('/merchant/products', { params })).data;
+  },
+  addProduct: async (payload) =>
+    (await api.post('/merchant/products', payload)).data,
+  removeProduct: async (productId) =>
+    (await api.delete(`/merchant/products/${productId}`)).data,
+};
+
+// -----------------------------
 // Admin (superuser only)
 // -----------------------------
 export const adminApi = {

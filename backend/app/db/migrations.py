@@ -53,3 +53,8 @@ async def evolve_schema(db: AsyncSession) -> None:
         "product_id": "INTEGER REFERENCES products(id)",
         "merchant_id": "INTEGER REFERENCES merchants(id)",
     })
+    await ensure_columns(db, "users", {
+        "role": "VARCHAR(16) DEFAULT 'user'",
+        "business_name": "VARCHAR(200)",
+        "business_description": "VARCHAR(500)",
+    })

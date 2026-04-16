@@ -31,7 +31,7 @@ router = APIRouter()
 async def require_superuser(
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> User:
-    if not current_user.is_superuser:
+    if not (current_user.is_superuser or current_user.role == "admin"):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Admin access required")
     return current_user
 
