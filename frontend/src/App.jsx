@@ -159,7 +159,7 @@ function AuthenticatedApp({ user, onLogout }) {
       <AppHeader user={user} onSearch={(q) => { setCurrentView('search'); }} onLogout={handleLogout} />
 
       {/* Desktop icon sidebar */}
-      <GlassSidebar items={navItems} active={currentView} onNavigate={handleNavigation} />
+      <GlassSidebar items={navItems} active={currentView} onNavigate={handleNavigation} onLogout={handleLogout} />
 
       {/* Mobile bottom nav (first 5 items) */}
       <GlassNav items={navItems.slice(0, 5)} active={currentView} onNavigate={handleNavigation} />
