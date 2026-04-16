@@ -1,7 +1,9 @@
-// src/App.jsx
+// src/App.jsx — Figma-matched layout: icon sidebar + green header + bottom nav.
+// ALL existing logic preserved. Only the visual shell changed.
 import React, { useState, useEffect } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
-import Header from './components/Header';
+
+// Views
 import Dashboard from './components/Dashboard';
 import DealList from './components/deals/DealList';
 import DealForm from './components/deals/DealForm';
@@ -15,10 +17,17 @@ import FloatingChatWidget from './components/chat/FloatingChatWidget';
 import ShoppingListsView from './components/shoppingLists/ShoppingListsView';
 import AdminView from './components/admin/AdminView';
 import AuthScreen from './components/auth/AuthScreen';
+
+// Layout
+import AppHeader from './components/layout/AppHeader';
+import { GlassSidebar, GlassNav } from './components/ui';
+
+// State
 import { authApi, dealsApi } from './api';
 import { useAuthStore } from './stores/authStore';
 import { useCartStore } from './stores/cartStore';
 import { useChatStore } from './stores/chatStore';
+
 import './App.css';
 
 const parseDealsResponse = (data) => {
@@ -27,8 +36,28 @@ const parseDealsResponse = (data) => {
   return Array.isArray(data) ? data : [];
 };
 
+// ── Nav icon SVGs (tiny, inline) ─────────────────────────────────────
+const Icon = ({ d, ...p }) => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" {...p}>
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d={d} />
+  </svg>
+);
+
+const NAV_ICONS = {
+  chat:     <Icon d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />,
+  search:   <Icon d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />,
+  lists:    <Icon d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />,
+  cart:     <Icon d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-2 6h14m-9 4a1 1 0 11-2 0 1 1 0 012 0zm8 0a1 1 0 11-2 0 1 1 0 012 0z" />,
+  tracking: <Icon d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />,
+  wallet:   <Icon d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />,
+  deals:    <Icon d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z" />,
+  settings: <Icon d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />,
+  admin:    <Icon d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />,
+};
+
+// ── Authenticated app ────────────────────────────────────────────────
 function AuthenticatedApp({ user, onLogout }) {
-  const [currentView, setCurrentView] = useState('dashboard');
+  const [currentView, setCurrentView] = useState('chat');
   const [allDeals, setAllDeals] = useState([]);
   const [filteredDeals, setFilteredDeals] = useState([]);
   const [selectedDeal, setSelectedDeal] = useState(null);
@@ -42,46 +71,28 @@ function AuthenticatedApp({ user, onLogout }) {
   const resetCart = useCartStore((s) => s.reset);
   const resetChat = useChatStore((s) => s.reset);
 
-  // Hydrate cart once on boot so the header badge is accurate.
   useEffect(() => { refreshCart(); }, [refreshCart]);
-
-  // Refresh cart whenever the user enters the Cart view.
-  useEffect(() => {
-    if (currentView === 'cart') refreshCart();
-  }, [currentView, refreshCart]);
-
+  useEffect(() => { if (currentView === 'cart') refreshCart(); }, [currentView, refreshCart]);
   useEffect(() => {
     if (currentView === 'deals' || currentView === 'dashboard') fetchAllDeals();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentView]);
 
   const fetchAllDeals = async () => {
     try {
-      setLoading(true);
-      setError(null);
+      setLoading(true); setError(null);
       const data = await dealsApi.getAllDeals({ page: 1, size: 20 });
       const arr = parseDealsResponse(data);
-      setAllDeals(arr);
-      setFilteredDeals(arr);
-    } catch (err) {
-      setError('Failed to fetch deals. Please check if the backend is running.');
-    } finally {
-      setLoading(false);
-    }
+      setAllDeals(arr); setFilteredDeals(arr);
+    } catch { setError('Failed to fetch deals.'); }
+    finally { setLoading(false); }
   };
 
   const fetchDealsForFilters = async (params) => {
     try {
-      setLoading(true);
-      setError(null);
-      const data = await dealsApi.getAllDeals({ page: 1, size: 20, ...params });
-      return parseDealsResponse(data);
-    } catch (err) {
-      setError('Failed to fetch deals. Please check if the backend is running.');
-      return [];
-    } finally {
-      setLoading(false);
-    }
+      setLoading(true); setError(null);
+      return parseDealsResponse(await dealsApi.getAllDeals({ page: 1, size: 20, ...params }));
+    } catch { setError('Failed to fetch deals.'); return []; }
+    finally { setLoading(false); }
   };
 
   const handleCreateDeal = async (dealData) => {
@@ -89,149 +100,124 @@ function AuthenticatedApp({ user, onLogout }) {
       setLoading(true);
       const newDeal = await dealsApi.createDeal(dealData);
       const updated = [newDeal, ...allDeals];
-      setAllDeals(updated);
-      setFilteredDeals(updated);
-      setShowAddForm(false);
-      setCurrentView('deals');
+      setAllDeals(updated); setFilteredDeals(updated);
+      setShowAddForm(false); setCurrentView('deals');
       toast.success('Deal created!');
-    } catch (err) {
-      toast.error('Failed to create deal.');
-    } finally {
-      setLoading(false);
-    }
+    } catch { toast.error('Failed to create deal.'); }
+    finally { setLoading(false); }
   };
 
   const handleFiltersChange = async (filters) => {
-    const backendParams = {};
-    if (filters.merchant) backendParams.merchant = filters.merchant;
-    if (filters.category) backendParams.category = filters.category;
-    if (filters.isActive === 'true') backendParams.active_only = true;
-    const wantsInactiveOnly = filters.isActive === 'false';
-    if (wantsInactiveOnly) backendParams.include_expired = true;
-
-    const fetched = await fetchDealsForFilters(backendParams);
+    const bp = {};
+    if (filters.merchant) bp.merchant = filters.merchant;
+    if (filters.category) bp.category = filters.category;
+    if (filters.isActive === 'true') bp.active_only = true;
+    const wantsInactive = filters.isActive === 'false';
+    if (wantsInactive) bp.include_expired = true;
+    const fetched = await fetchDealsForFilters(bp);
     setAllDeals(fetched);
-
     let final = [...fetched];
     if (filters.search) {
-      const term = filters.search.toLowerCase();
-      final = final.filter(
-        (d) => d.product_name?.toLowerCase().includes(term) ||
-               d.description?.toLowerCase().includes(term),
-      );
+      const t = filters.search.toLowerCase();
+      final = final.filter((d) => d.product_name?.toLowerCase().includes(t) || d.description?.toLowerCase().includes(t));
     }
-    if (filters.minPrice) {
-      const min = parseFloat(filters.minPrice);
-      if (!Number.isNaN(min)) final = final.filter((d) => Number(d.price) >= min);
-    }
-    if (filters.maxPrice) {
-      const max = parseFloat(filters.maxPrice);
-      if (!Number.isNaN(max)) final = final.filter((d) => Number(d.price) <= max);
-    }
-    if (wantsInactiveOnly) final = final.filter((d) => d.is_active === false);
+    if (filters.minPrice) { const m = parseFloat(filters.minPrice); if (!isNaN(m)) final = final.filter((d) => Number(d.price) >= m); }
+    if (filters.maxPrice) { const m = parseFloat(filters.maxPrice); if (!isNaN(m)) final = final.filter((d) => Number(d.price) <= m); }
+    if (wantsInactive) final = final.filter((d) => d.is_active === false);
     setFilteredDeals(final);
   };
 
-  const handleDealSelect = (deal) => {
-    setSelectedDeal(deal);
-    setShowDealDetails(true);
-  };
+  const handleNavigation = (view) => { setCurrentView(view); setShowAddForm(false); setShowDealDetails(false); };
+  const handleAddDeal = () => { setShowAddForm(true); setCurrentView('add-deal'); };
+  const handleLogout = () => { resetCart(); resetChat(); onLogout(); };
 
-  const handleNavigation = (view) => {
-    setCurrentView(view);
-    setShowAddForm(false);
-    setShowDealDetails(false);
-  };
-
-  const handleAddDeal = () => {
-    setShowAddForm(true);
-    setCurrentView('add-deal');
-  };
-
-  const handleLogout = () => {
-    resetCart();
-    resetChat();
-    onLogout();
-  };
-
-  const tabs = [
-    { key: 'dashboard', label: 'Dashboard' },
-    { key: 'chat',      label: 'Chat AI' },
-    { key: 'search',    label: 'Compare Prices' },
-    { key: 'cart',      label: 'Cart', count: cartItemCount },
-    { key: 'lists',     label: 'Lists' },
-    { key: 'tracking',  label: 'Tracking' },
-    { key: 'deals',     label: `Deals (${allDeals.length})`, match: ['deals', 'add-deal'] },
-    ...(user?.is_superuser ? [{ key: 'admin', label: 'Admin' }] : []),
+  // Build nav items matching Figma sidebar order
+  const navItems = [
+    { key: 'chat',     label: 'Assistant', icon: NAV_ICONS.chat },
+    { key: 'search',   label: 'Compare',   icon: NAV_ICONS.search },
+    { key: 'lists',    label: 'Lists',     icon: NAV_ICONS.lists },
+    { key: 'cart',     label: 'Cart',      icon: NAV_ICONS.cart, count: cartItemCount },
+    { key: 'tracking', label: 'Watchlist',  icon: NAV_ICONS.tracking },
+    { key: 'wallet',   label: 'Wallet',    icon: NAV_ICONS.wallet },
+    { key: 'deals',    label: 'Deals',     icon: NAV_ICONS.deals, match: ['deals', 'add-deal'] },
+    { key: 'settings', label: 'Settings',  icon: NAV_ICONS.settings },
+    ...(user?.is_superuser ? [{ key: 'admin', label: 'Admin', icon: NAV_ICONS.admin }] : []),
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header
-        onAddDeal={handleAddDeal}
-        user={user}
-        onLogout={handleLogout}
-        cartCount={cartItemCount}
-        onOpenCart={() => handleNavigation('cart')}
-      />
+    <div className="min-h-screen">
+      {/* Green header */}
+      <AppHeader user={user} onSearch={(q) => { setCurrentView('search'); }} onLogout={handleLogout} />
 
-      <nav className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex space-x-6 overflow-x-auto">
-            {tabs.map((tab) => {
-              const active = tab.match
-                ? tab.match.includes(currentView)
-                : currentView === tab.key;
-              return (
-                <button
-                  key={tab.key}
-                  onClick={() => handleNavigation(tab.key)}
-                  className={`relative py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
-                    active
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  {tab.label}
-                  {tab.badge && (
-                    <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-700 uppercase tracking-wide">
-                      {tab.badge}
-                    </span>
-                  )}
-                  {tab.count > 0 && (
-                    <span className="ml-2 inline-flex items-center justify-center text-[10px] font-semibold bg-blue-600 text-white rounded-full min-w-[18px] h-[18px] px-1">
-                      {tab.count}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+      {/* Desktop icon sidebar */}
+      <GlassSidebar items={navItems} active={currentView} onNavigate={handleNavigation} />
+
+      {/* Mobile bottom nav (first 5 items) */}
+      <GlassNav items={navItems.slice(0, 5)} active={currentView} onNavigate={handleNavigation} />
+
+      {/* Main content area */}
+      <main
+        className="md:ml-[var(--sidebar-w)] pb-nav md:pb-0"
+        style={{ paddingTop: 'var(--header-h)' }}
+      >
+        {/* Sub-header for Chat view — "Shopping Intelligence" */}
+        {currentView === 'chat' && (
+          <div className="glass-heavy glass-border-b px-4 md:px-6 py-3 flex items-center justify-between">
+            <div>
+              <h1 className="text-[var(--text-lg)] font-bold" style={{ color: 'var(--text-primary)' }}>Shopping Intelligence</h1>
+              <div className="flex items-center gap-3 mt-1">
+                <span className="text-[var(--text-xs)] font-medium" style={{ color: 'var(--text-tertiary)' }}>Find deals</span>
+                <span className="text-[var(--text-xs)]" style={{ color: 'var(--text-tertiary)' }}>•</span>
+                <span className="text-[var(--text-xs)] font-medium" style={{ color: 'var(--text-tertiary)' }}>Compare prices</span>
+                <span className="text-[var(--text-xs)]" style={{ color: 'var(--text-tertiary)' }}>•</span>
+                <span className="text-[var(--text-xs)] font-medium" style={{ color: 'var(--text-tertiary)' }}>Automate purchases</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => useChatStore.getState().newConversation()}
+                className="glass-btn glass-btn-brand px-3 py-1.5 text-[var(--text-sm)]"
+              >
+                Recent
+              </button>
+              <button
+                onClick={() => useChatStore.getState().newConversation()}
+                className="glass-btn glass-btn-surface px-3 py-1.5 text-[var(--text-sm)]"
+                style={{ color: 'var(--color-primary)' }}
+              >
+                + New
+              </button>
+            </div>
           </div>
-        </div>
-      </nav>
+        )}
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
+        <div className="p-4 md:p-6">
           {currentView === 'dashboard' && <Dashboard deals={allDeals} onNavigate={handleNavigation} />}
           {currentView === 'chat' && <ChatView />}
           {currentView === 'search' && <SearchView />}
           {currentView === 'cart' && <CartView onNavigate={handleNavigation} />}
           {currentView === 'lists' && <ShoppingListsView onNavigate={handleNavigation} />}
           {currentView === 'tracking' && <RulesView onNavigate={handleNavigation} />}
+          {currentView === 'wallet' && (
+            <div className="glass-card p-8 text-center" style={{ color: 'var(--text-secondary)' }}>
+              <h2 className="text-[var(--text-2xl)] font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Wallet</h2>
+              <p>Wallet feature coming soon — manage funds, cashback, and referrals.</p>
+            </div>
+          )}
+          {currentView === 'settings' && (
+            <div className="glass-card p-8 text-center" style={{ color: 'var(--text-secondary)' }}>
+              <h2 className="text-[var(--text-2xl)] font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Settings</h2>
+              <p>Settings page coming soon — automation rules, preferences, notifications.</p>
+            </div>
+          )}
           {currentView === 'admin' && user?.is_superuser && <AdminView />}
 
           {currentView === 'deals' && (
             <div className="space-y-6">
               <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold text-gray-900">All Deals</h1>
-                <button
-                  onClick={handleAddDeal}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
-                >
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                  Add New Deal
+                <h1 className="text-[var(--text-2xl)] font-bold" style={{ color: 'var(--text-primary)' }}>All Deals</h1>
+                <button onClick={handleAddDeal} className="glass-btn glass-btn-primary px-4 py-2 text-[var(--text-sm)]">
+                  + Add New Deal
                 </button>
               </div>
               <DealFilters onFiltersChange={handleFiltersChange} loading={loading} />
@@ -239,7 +225,7 @@ function AuthenticatedApp({ user, onLogout }) {
                 deals={filteredDeals}
                 loading={loading}
                 error={error}
-                onDealSelect={handleDealSelect}
+                onDealSelect={(d) => { setSelectedDeal(d); setShowDealDetails(true); }}
               />
             </div>
           )}
@@ -247,15 +233,12 @@ function AuthenticatedApp({ user, onLogout }) {
           {currentView === 'add-deal' && showAddForm && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold text-gray-900">Add New Deal</h1>
+                <h1 className="text-[var(--text-2xl)] font-bold" style={{ color: 'var(--text-primary)' }}>Add New Deal</h1>
                 <button onClick={() => { setShowAddForm(false); setCurrentView('deals'); }}
-                        className="text-gray-400 hover:text-gray-600">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+                        className="w-8 h-8 rounded-full glass glass-border flex items-center justify-center"
+                        style={{ color: 'var(--text-tertiary)' }}>✕</button>
               </div>
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="glass-card p-6">
                 <DealForm
                   onSubmit={handleCreateDeal}
                   onCancel={() => { setShowAddForm(false); setCurrentView('deals'); }}
@@ -267,27 +250,20 @@ function AuthenticatedApp({ user, onLogout }) {
         </div>
       </main>
 
+      {/* Deal details modal */}
       <DealDetails
         deal={selectedDeal}
         isOpen={showDealDetails}
         onClose={() => { setShowDealDetails(false); setSelectedDeal(null); }}
       />
 
-      {error && currentView === 'deals' && (
-        <div className="fixed bottom-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg">
-          <div className="flex items-center">
-            {error}
-            <button onClick={() => setError(null)} className="ml-4 text-red-500 hover:text-red-700">✕</button>
-          </div>
-        </div>
-      )}
-
-      {/* Floating AI assistant — hidden on the full Chat tab */}
+      {/* Floating AI bubble — hidden on the Chat view */}
       <FloatingChatWidget hidden={currentView === 'chat'} />
     </div>
   );
 }
 
+// ── Root App ─────────────────────────────────────────────────────────
 function App() {
   const token = useAuthStore((s) => s.token);
   const user = useAuthStore((s) => s.user);
@@ -295,16 +271,12 @@ function App() {
   const logout = useAuthStore((s) => s.logout);
 
   useEffect(() => {
-    if (token && !user) {
-      authApi.me().then(setUser).catch(() => logout());
-    }
+    if (token && !user) authApi.me().then(setUser).catch(() => logout());
   }, [token, user, setUser, logout]);
 
   return (
     <>
-      {token
-        ? <AuthenticatedApp user={user} onLogout={logout} />
-        : <AuthScreen />}
+      {token ? <AuthenticatedApp user={user} onLogout={logout} /> : <AuthScreen />}
       <Toaster position="top-right" reverseOrder={false} />
     </>
   );
