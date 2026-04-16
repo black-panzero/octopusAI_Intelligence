@@ -323,17 +323,25 @@ const SendToCartSummary = ({ result }) => {
 
 const RefreshSummary = ({ result }) => {
   const per = result?.per_scraper || [];
-  const total = result?.offers_persisted ?? 0;
-  // Empty scrape = no widget, let the AI reply explain.
-  if (per.length === 0 && total === 0) return null;
+  const offers = result?.offers_persisted ?? 0;
+  // Nothing interesting to say; the assistant's prose reply covers it.
+  if (per.length === 0 && offers === 0) return null;
   return (
     <div className="border border-gray-200 rounded-lg bg-white p-3 text-xs">
-      <div className="flex items-center justify-between mb-2">
-        <span className="font-semibold text-gray-900">
-          Live refresh · {result?.query ? `"${result.query}"` : ''}
+      <div className="flex items-center justify-between mb-2 gap-2">
+        <span className="font-semibold text-gray-900 truncate">
+          {result?.query
+            ? `Swept ${per.length} Kenyan stores for "${result.query}"`
+            : 'Live sweep'}
         </span>
-        <span className={total > 0 ? 'text-green-700 font-medium' : 'text-gray-500'}>
-          {total} new offer{total === 1 ? '' : 's'}
+        <span
+          className={`flex-shrink-0 ${
+            offers > 0 ? 'text-green-700 font-medium' : 'text-gray-500'
+          }`}
+        >
+          {offers > 0
+            ? `${offers} new offer${offers === 1 ? '' : 's'}`
+            : 'Nothing new'}
         </span>
       </div>
       <div className="flex flex-wrap gap-1.5">
@@ -345,9 +353,9 @@ const RefreshSummary = ({ result }) => {
                 ? 'bg-green-100 text-green-800'
                 : 'bg-gray-100 text-gray-500'
             }`}
-            title={s.ok ? `${s.count} offers` : 'No offers returned'}
+            title={s.ok ? `${s.count} offers` : 'Quiet this round'}
           >
-            {s.slug}{s.ok ? ` · ${s.count}` : ''}
+            {s.slug.replace(/_/g, ' ')}{s.ok ? ` · ${s.count}` : ''}
           </span>
         ))}
       </div>
