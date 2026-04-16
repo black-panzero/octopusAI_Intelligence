@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="#2563eb"/>
+  <!-- Content stays inside the safe area (roughly 80% centered) for maskable icons. -->
+  <g transform="translate(256 256)">
+    <g transform="translate(-128 -128)">
+      <path d="M80 96h96a18 18 0 0 1 17.5 22.1l-11.7 49.6a18 18 0 0 1-17.5 14H93.4L86.6 200H180"
+            stroke="#fff" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <circle cx="100" cy="224" r="12" fill="#fff"/>
+      <circle cx="164" cy="224" r="12" fill="#fff"/>
+      <path d="M196 72l9 9 18 -22" stroke="#fff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </g>
+  </g>
+</svg>

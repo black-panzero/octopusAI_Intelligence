@@ -12,6 +12,7 @@ from sqlalchemy.orm import selectinload
 
 from app.db.models.deals import Deal
 from app.schemas.deals import DealCreate, DealUpdate
+from app.services.deal_sync_service import sync_deal_to_catalog
 
 logger = structlog.get_logger(__name__)
 
@@ -49,8 +50,23 @@ class DealService:
                 is_active=True
             )
 
-            # Add to session and commit
+            # Add to session and flush to get an id without committing yet.
             self.db.add(deal)
+            await self.db.flush()
+
+            # Mirror into the canonical catalog so this deal is searchable
+            # across /products/search and can be added to cart / tracked.
+            try:
+                await sync_deal_to_catalog(self.db, deal)
+            except Exception as sync_err:
+                # Catalog sync is best-effort — log but don't fail the deal.
+                logger.warning(
+                    "Deal catalog-sync failed",
+                    product_name=deal.product_name,
+                    merchant=deal.merchant,
+                    error=str(sync_err),
+                )
+
             await self.db.commit()
             await self.db.refresh(deal)
 
@@ -58,7 +74,9 @@ class DealService:
                 "Deal created successfully",
                 deal_id=deal.id,
                 product_name=deal.product_name,
-                merchant=deal.merchant
+                merchant=deal.merchant,
+                product_id=deal.product_id,
+                merchant_id=deal.merchant_id,
             )
 
             return deal
@@ -269,6 +287,55 @@ class DealService:
 
         except Exception as e:
             logger.error("Failed to get active deals count", error=str(e))
+            raise
+
+    async def get_summary_stats(self, recent_limit: int = 5) -> dict:
+        """
+        Get aggregated deal statistics for the dashboard.
+
+        Returns:
+            dict with total_deals, active_deals, inactive_deals,
+            unique_merchants, unique_categories, recent_deals.
+        """
+        try:
+            total = (await self.db.execute(select(func.count(Deal.id)))).scalar() or 0
+            active = (
+                await self.db.execute(
+                    select(func.count(Deal.id)).where(Deal.is_active == True)  # noqa: E712
+                )
+            ).scalar() or 0
+
+            merchants = (
+                await self.db.execute(
+                    select(func.count(func.distinct(Deal.merchant)))
+                )
+            ).scalar() or 0
+            categories = (
+                await self.db.execute(
+                    select(func.count(func.distinct(Deal.category))).where(
+                        Deal.category.is_not(None)
+                    )
+                )
+            ).scalar() or 0
+
+            recent_stmt = (
+                select(Deal)
+                .where(Deal.is_active == True)  # noqa: E712
+                .order_by(desc(Deal.created_at))
+                .limit(recent_limit)
+            )
+            recent = (await self.db.execute(recent_stmt)).scalars().all()
+
+            return {
+                "total_deals": total,
+                "active_deals": active,
+                "inactive_deals": max(total - active, 0),
+                "unique_merchants": merchants,
+                "unique_categories": categories,
+                "recent_deals": recent,
+            }
+        except Exception as e:
+            logger.error("Failed to build summary stats", error=str(e))
             raise
 
     async def get_deals_by_merchant(self, merchant: str, limit: int = 10) -> Sequence[Deal]:

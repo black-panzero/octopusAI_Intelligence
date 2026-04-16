@@ -60,11 +60,33 @@ async def create_tables() -> None:
     
     try:
         async with engine.begin() as conn:
-            # Import models to register them
-            from app.db.models.deals import Deal  # noqa: F401
-            
+            # Import models to register them with SQLAlchemy's metadata
+            from app.db.models.deals import Deal                  # noqa: F401
+            from app.db.models.user import User                   # noqa: F401
+            from app.db.models.merchant import Merchant           # noqa: F401
+            from app.db.models.product import Product             # noqa: F401
+            from app.db.models.price_snapshot import PriceSnapshot  # noqa: F401
+            from app.db.models.cart import Cart, CartItem         # noqa: F401
+            from app.db.models.price_rule import PriceRule        # noqa: F401
+            from app.db.models.conversation import Conversation, ChatTurn  # noqa: F401
+            from app.db.models.shopping_list import ShoppingList, ShoppingListItem  # noqa: F401
+
             # Create all tables
             await conn.run_sync(Base.metadata.create_all)
+
+        # 1. Apply additive schema migrations (SQLite-friendly) so new
+        #    columns on existing tables land without wiping the DB.
+        # 2. Seed the Kenyan catalog if anything is missing.
+        # 3. Backfill any legacy deals that don't yet link to a product.
+        from app.db.migrations import evolve_schema
+        from app.db.seed import seed_if_empty
+        from app.services.deal_sync_service import backfill_deal_links
+        from app.services.auth_service import seed_admin
+        async with AsyncSessionLocal() as session:
+            await evolve_schema(session)
+            await seed_if_empty(session)
+            await backfill_deal_links(session)
+            await seed_admin(session)
         
         logger.info("Database tables created successfully")
     except Exception as e:

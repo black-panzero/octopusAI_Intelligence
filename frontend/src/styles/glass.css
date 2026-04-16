@@ -1,0 +1,198 @@
+/* =========================================================================
+   Glass utility classes — Light frosted glass over colorful backgrounds.
+   ========================================================================= */
+
+/* ── Base glass surfaces ─────────────────────────────────────────────── */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+}
+.glass-heavy {
+  background: var(--glass-bg-heavy);
+  backdrop-filter: blur(var(--blur-heavy));
+  -webkit-backdrop-filter: blur(var(--blur-heavy));
+}
+.glass-light {
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(var(--blur-light));
+  -webkit-backdrop-filter: blur(var(--blur-light));
+}
+.glass-solid {
+  background: var(--glass-bg-solid);
+  backdrop-filter: blur(var(--blur-heavy));
+  -webkit-backdrop-filter: blur(var(--blur-heavy));
+}
+.glass-subtle {
+  background: var(--glass-bg-subtle);
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+}
+
+/* ── Glass borders ───────────────────────────────────────────────────── */
+.glass-border   { border: 1px solid var(--glass-border); }
+.glass-border-b { border-bottom: 1px solid var(--glass-border-subtle); }
+.glass-border-t { border-top: 1px solid var(--glass-border-subtle); }
+.glass-border-l { border-left: 1px solid var(--glass-border-subtle); }
+
+/* ── Glass effects ───────────────────────────────────────────────────── */
+.glass-shadow    { box-shadow: var(--glass-shadow); }
+.glass-shadow-lg { box-shadow: var(--glass-shadow-lg); }
+.glass-inset     { box-shadow: var(--glass-inset); }
+.glass-elevated  {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow), var(--glass-inset);
+}
+.glass-card {
+  background: var(--glass-bg-heavy);
+  backdrop-filter: blur(var(--blur-heavy));
+  -webkit-backdrop-filter: blur(var(--blur-heavy));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--glass-shadow), var(--glass-inset);
+}
+
+/* ── Hover state ─────────────────────────────────────────────────────── */
+.glass-hover:hover {
+  background: var(--glass-bg-heavy);
+}
+
+/* ── Inputs ──────────────────────────────────────────────────────────── */
+.glass-input {
+  background: var(--glass-bg-light);
+  border: 1px solid var(--glass-border-subtle);
+  border-radius: var(--r-md);
+  color: var(--text-primary);
+  transition: border-color var(--dur-fast) var(--ease),
+              box-shadow var(--dur-fast) var(--ease);
+}
+.glass-input::placeholder { color: var(--text-tertiary); }
+.glass-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────── */
+.glass-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: var(--r-md);
+  font-weight: 600;
+  transition: all var(--dur-fast) var(--ease);
+  cursor: pointer;
+  border: none;
+}
+.glass-btn-primary {
+  background: var(--text-primary);
+  color: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.glass-btn-primary:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.20);
+  transform: translateY(-1px);
+}
+.glass-btn-brand {
+  background: var(--brand-gradient);
+  color: white;
+  box-shadow: 0 2px 8px rgba(45, 143, 62, 0.25);
+}
+.glass-btn-brand:hover {
+  box-shadow: 0 4px 16px rgba(45, 143, 62, 0.35);
+  transform: translateY(-1px);
+}
+.glass-btn-cta {
+  background: var(--color-cta);
+  color: white;
+  box-shadow: 0 2px 8px var(--color-cta-glow);
+}
+.glass-btn-cta:hover {
+  background: var(--color-cta-hover);
+  box-shadow: 0 4px 16px var(--color-cta-glow);
+}
+.glass-btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--glass-border-subtle);
+}
+.glass-btn-ghost:hover {
+  background: var(--glass-bg-light);
+  color: var(--text-primary);
+}
+.glass-btn-surface {
+  background: var(--glass-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(var(--blur-light));
+}
+.glass-btn-surface:hover {
+  background: var(--glass-bg-heavy);
+}
+.glass-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none !important;
+}
+.glass-btn:active { transform: translateY(0); }
+
+/* ── Divider ─────────────────────────────────────────────────────────── */
+.glass-divider {
+  height: 1px;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* ── Scrollbar ───────────────────────────────────────────────────────── */
+.glass-scroll::-webkit-scrollbar { width: 4px; }
+.glass-scroll::-webkit-scrollbar-track { background: transparent; }
+.glass-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.12);
+  border-radius: 2px;
+}
+.glass-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,0,0,0.20);
+}
+
+/* ── Badges ──────────────────────────────────────────────────────────── */
+.badge-green  { background: var(--color-green-soft); color: var(--color-green); }
+.badge-red    { background: var(--color-red-soft);   color: var(--color-red); }
+.badge-amber  { background: var(--color-amber-soft); color: var(--color-amber); }
+.badge-blue   { background: var(--color-primary-soft);color: var(--color-primary); }
+.badge-purple { background: var(--color-purple-soft);color: var(--color-purple); }
+
+/* ── Toggle switch (iOS-style) ───────────────────────────────────────── */
+.glass-toggle {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  background: rgba(0,0,0,0.12);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease);
+  flex-shrink: 0;
+}
+.glass-toggle.active {
+  background: var(--color-green);
+}
+.glass-toggle::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  top: 2px;
+  left: 2px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  transition: transform var(--dur-fast) var(--ease);
+}
+.glass-toggle.active::after {
+  transform: translateX(20px);
+}
+
+/* ── Bottom nav safe padding ─────────────────────────────────────────── */
+.pb-nav { padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 8px); }
