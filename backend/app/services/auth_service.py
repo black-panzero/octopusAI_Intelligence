@@ -4,7 +4,7 @@ Auth service: register, authenticate, and resolve the current user.
 from typing import Optional
 
 import structlog
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import hash_password, verify_password
@@ -31,18 +31,29 @@ class AuthService:
         return result.scalar_one_or_none()
 
     async def register(self, data: UserRegister) -> User:
-        """Create a new user. Caller must ensure email is unique."""
+        """Create a new user. Caller must ensure email is unique.
+
+        The very first user in the system is automatically promoted to
+        superuser so the initial admin account is a one-step signup.
+        """
+        first_user = (await self.db.execute(
+            select(func.count(User.id))
+        )).scalar_one() == 0
+
         user = User(
             email=data.email.lower(),
             hashed_password=hash_password(data.password),
             full_name=data.full_name,
             is_active=True,
-            is_superuser=False,
+            is_superuser=first_user,
         )
         self.db.add(user)
         await self.db.commit()
         await self.db.refresh(user)
-        logger.info("User registered", user_id=user.id, email=user.email)
+        logger.info(
+            "User registered",
+            user_id=user.id, email=user.email, superuser=user.is_superuser,
+        )
         return user
 
     async def authenticate(self, email: str, password: str) -> Optional[User]:

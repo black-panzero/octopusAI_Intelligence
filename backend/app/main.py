@@ -13,6 +13,7 @@ from fastapi.responses import JSONResponse
 
 from app.core.config import get_settings
 from app.db.database import create_tables, get_database
+from app.routers.admin import router as admin_router
 from app.routers.auth import router as auth_router
 from app.routers.cart import router as cart_router
 from app.routers.chat import router as chat_router
@@ -21,6 +22,8 @@ from app.routers.products import router as products_router
 from app.routers.recommendations import router as recommendations_router
 from app.routers.rules import router as rules_router
 from app.routers.shopping_lists import router as shopping_lists_router
+from app.services.background_jobs import job_evaluate_all_rules, job_resolve_images
+from app.services.scheduler import BackgroundScheduler
 
 # Configure structured logging
 structlog.configure(
@@ -56,10 +59,21 @@ async def lifespan(app: FastAPI):
         logger.error("Failed to initialize database", error=str(e))
         raise
 
+    # Boot the background scheduler. Jobs are per-app-instance, not
+    # per-worker replica (move to Redis/Celery once we run >1 worker).
+    scheduler = BackgroundScheduler()
+    scheduler.add("resolve_missing_images", interval_seconds=300, coro=job_resolve_images,
+                  first_run_delay=10)
+    scheduler.add("evaluate_rules",          interval_seconds=900, coro=job_evaluate_all_rules,
+                  first_run_delay=60)
+    scheduler.start()
+    app.state.scheduler = scheduler
+
     yield
 
     # Cleanup on shutdown
     logger.info("Shutting down SmartBuy Backend")
+    await scheduler.shutdown()
 
 
 def create_app() -> FastAPI:
@@ -135,6 +149,11 @@ def create_app() -> FastAPI:
         shopping_lists_router,
         prefix="/api/v1/shopping-lists",
         tags=["shopping-lists"]
+    )
+    app.include_router(
+        admin_router,
+        prefix="/api/v1/admin",
+        tags=["admin"]
     )
 
     @app.get("/", response_class=JSONResponse)

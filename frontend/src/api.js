@@ -86,6 +86,25 @@ export const recommendationsApi = {
 };
 
 // -----------------------------
+// Admin (superuser only)
+// -----------------------------
+export const adminApi = {
+  stats: async () => (await api.get('/admin/stats')).data,
+  merchants: async () => (await api.get('/admin/merchants')).data,
+  products: async ({ page = 1, size = 30, q = '', missing_image = false } = {}) => {
+    const params = { page, size, missing_image };
+    if (q) params.q = q;
+    return (await api.get('/admin/products', { params })).data;
+  },
+  snapshots: async (productId, limit = 100) =>
+    (await api.get(`/admin/products/${productId}/snapshots`, { params: { limit } })).data,
+  scrape: async (q) =>
+    (await api.post('/admin/scrape', null, { params: { q } })).data,
+  resolveImages: async (batch_size = 30) =>
+    (await api.post('/admin/resolve-images', null, { params: { batch_size } })).data,
+};
+
+// -----------------------------
 // Shopping lists / wishlists
 // -----------------------------
 export const shoppingListsApi = {

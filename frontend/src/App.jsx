@@ -13,6 +13,7 @@ import RulesView from './components/rules/RulesView';
 import ChatView from './components/chat/ChatView';
 import FloatingChatWidget from './components/chat/FloatingChatWidget';
 import ShoppingListsView from './components/shoppingLists/ShoppingListsView';
+import AdminView from './components/admin/AdminView';
 import AuthScreen from './components/auth/AuthScreen';
 import { authApi, dealsApi } from './api';
 import { useAuthStore } from './stores/authStore';
@@ -158,9 +159,10 @@ function AuthenticatedApp({ user, onLogout }) {
     { key: 'chat',      label: 'Chat AI' },
     { key: 'search',    label: 'Compare Prices' },
     { key: 'cart',      label: 'Cart', count: cartItemCount },
-    { key: 'lists',     label: 'Lists', badge: 'NEW' },
+    { key: 'lists',     label: 'Lists' },
     { key: 'tracking',  label: 'Tracking' },
     { key: 'deals',     label: `Deals (${allDeals.length})`, match: ['deals', 'add-deal'] },
+    ...(user?.is_superuser ? [{ key: 'admin', label: 'Admin' }] : []),
   ];
 
   return (
@@ -216,6 +218,7 @@ function AuthenticatedApp({ user, onLogout }) {
           {currentView === 'cart' && <CartView onNavigate={handleNavigation} />}
           {currentView === 'lists' && <ShoppingListsView onNavigate={handleNavigation} />}
           {currentView === 'tracking' && <RulesView onNavigate={handleNavigation} />}
+          {currentView === 'admin' && user?.is_superuser && <AdminView />}
 
           {currentView === 'deals' && (
             <div className="space-y-6">

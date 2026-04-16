@@ -193,6 +193,18 @@ class ScrapingService:
                     merged.update(product.specs)
                 product.specs = merged
 
+        # If we still don't have an image, try to resolve it from the offer's
+        # product-detail page synchronously but bounded — one extra HEAD/GET
+        # per merchant per product is cheap.
+        if not product.image_url and offer.url:
+            try:
+                from app.services.image_resolver import resolve_image_for_url
+                image = await resolve_image_for_url(offer.url)
+                if image:
+                    product.image_url = image
+            except Exception as e:
+                logger.debug("image_resolve_inline_failed", url=offer.url, error=str(e))
+
         # Skip near-identical snapshots captured in the last hour so history
         # doesn't get polluted when users hit "Refresh live" in quick succession.
         recent_stmt = (
