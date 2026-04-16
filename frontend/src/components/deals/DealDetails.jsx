@@ -11,35 +11,35 @@ const DealDetails = ({ deal, isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+        className="fixed inset-0 bg-black/50 transition-opacity"
         onClick={onClose}
       ></div>
 
       <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+        <div className="inline-block align-bottom glass-card text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full" style={{ background: 'var(--glass-bg-solid)' }}>
           {/* Header */}
-          <div className="bg-white px-6 pt-6 pb-4 border-b border-gray-200">
+          <div className="px-6 pt-6 pb-4 glass-border-b">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <h2 className="text-2xl font-bold text-gray-900 leading-tight mb-2">
+                <h2 className="text-2xl font-bold leading-tight mb-2" style={{ color: 'var(--text-primary)' }}>
                   {deal.product_name}
                 </h2>
                 <div className="flex items-center space-x-3">
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                     deal.is_active
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-red-100 text-red-800'
+                      ? 'badge-green'
+                      : 'badge-red'
                   }`}>
                     {deal.is_active ? 'Active Deal' : 'Inactive Deal'}
                   </span>
-                  <span className="text-sm text-gray-500">ID: {deal.id}</span>
+                  <span className="text-sm" style={{ color: 'var(--text-tertiary)' }}>ID: {deal.id}</span>
                 </div>
               </div>
               <button
                 onClick={onClose}
-                className="ml-4 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors duration-200"
+                className="glass-btn glass-btn-ghost ml-4 rounded-full p-2 transition-colors duration-200"
               >
-                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5" style={{ color: 'var(--text-secondary)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -47,26 +47,26 @@ const DealDetails = ({ deal, isOpen, onClose }) => {
           </div>
 
           {/* Content */}
-          <div className="bg-white px-6 py-6">
+          <div className="px-6 py-6">
             {/* Price */}
             <div className="mb-6">
-              <div className="bg-blue-50 rounded-lg p-4">
+              <div className="glass-card p-4" style={{ background: 'var(--color-primary-soft)' }}>
                 <div className="flex items-baseline flex-wrap gap-3 mb-2">
-                  <span className="text-3xl font-bold text-blue-600">
+                  <span className="text-3xl font-bold" style={{ color: 'var(--color-primary)' }}>
                     {formatKES(hasDiscount ? final : deal.price)}
                   </span>
                   {hasDiscount && (
-                    <span className="text-lg text-gray-500 line-through">
+                    <span className="text-lg line-through" style={{ color: 'var(--text-tertiary)' }}>
                       {formatKES(deal.price)}
                     </span>
                   )}
                 </div>
                 {hasDiscount && (
                   <div className="flex items-center space-x-2">
-                    <span className="text-lg font-semibold text-green-700">
+                    <span className="text-lg font-semibold" style={{ color: 'var(--color-green)' }}>
                       Save {formatKES(savings)}
                     </span>
-                    <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm font-medium">
+                    <span className="badge-green px-2 py-1 rounded-full text-sm font-medium">
                       {percent.toFixed(1)}% OFF
                     </span>
                   </div>
@@ -78,20 +78,20 @@ const DealDetails = ({ deal, isOpen, onClose }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div className="space-y-4">
                 <div>
-                  <h4 className="text-sm font-medium text-gray-700 mb-1">Merchant</h4>
-                  <p className="text-lg font-semibold text-gray-900">{deal.merchant}</p>
+                  <h4 className="text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Merchant</h4>
+                  <p className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>{deal.merchant}</p>
                 </div>
                 {deal.category && (
                   <div>
-                    <h4 className="text-sm font-medium text-gray-700 mb-1">Category</h4>
-                    <p className="text-lg font-semibold text-gray-900">{deal.category}</p>
+                    <h4 className="text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Category</h4>
+                    <p className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>{deal.category}</p>
                   </div>
                 )}
               </div>
               <div className="space-y-4">
                 <div>
-                  <h4 className="text-sm font-medium text-gray-700 mb-1">Added</h4>
-                  <p className="text-lg font-semibold text-gray-900">
+                  <h4 className="text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Added</h4>
+                  <p className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
                     {formatDate(deal.created_at, {
                       year: 'numeric', month: 'long', day: 'numeric',
                       hour: '2-digit', minute: '2-digit',
@@ -100,8 +100,8 @@ const DealDetails = ({ deal, isOpen, onClose }) => {
                 </div>
                 {deal.expiry && (
                   <div>
-                    <h4 className="text-sm font-medium text-gray-700 mb-1">Expires</h4>
-                    <p className="text-lg font-semibold text-gray-900">
+                    <h4 className="text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Expires</h4>
+                    <p className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
                       {formatDate(deal.expiry, {
                         year: 'numeric', month: 'long', day: 'numeric',
                       })}
@@ -110,12 +110,13 @@ const DealDetails = ({ deal, isOpen, onClose }) => {
                 )}
                 {deal.original_url && (
                   <div>
-                    <h4 className="text-sm font-medium text-gray-700 mb-1">Source Link</h4>
+                    <h4 className="text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Source Link</h4>
                     <a
                       href={deal.original_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium break-all"
+                      className="inline-flex items-center font-medium break-all"
+                      style={{ color: 'var(--color-primary)' }}
                     >
                       Open Original
                       <svg className="w-4 h-4 ml-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -129,19 +130,19 @@ const DealDetails = ({ deal, isOpen, onClose }) => {
 
             {deal.description && (
               <div className="mb-6">
-                <h4 className="text-sm font-medium text-gray-700 mb-2">Description</h4>
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <p className="text-gray-800 leading-relaxed">{deal.description}</p>
+                <h4 className="text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Description</h4>
+                <div className="glass-light rounded-[var(--r-lg)] p-4">
+                  <p className="leading-relaxed" style={{ color: 'var(--text-primary)' }}>{deal.description}</p>
                 </div>
               </div>
             )}
           </div>
 
           {/* Footer */}
-          <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
+          <div className="glass-light px-6 py-4 flex justify-end space-x-3 glass-border-t">
             <button
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+              className="glass-btn glass-btn-ghost px-4 py-2 text-sm font-medium transition-colors duration-200"
             >
               Close
             </button>
@@ -150,7 +151,7 @@ const DealDetails = ({ deal, isOpen, onClose }) => {
                 href={deal.original_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-4 py-2 bg-blue-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+                className="glass-btn glass-btn-primary px-4 py-2 text-sm font-medium transition-colors duration-200"
               >
                 View Deal
               </a>

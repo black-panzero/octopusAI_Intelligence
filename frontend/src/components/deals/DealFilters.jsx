@@ -44,13 +44,13 @@ const DealFilters = ({ onFiltersChange, loading = false }) => {
   );
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <div className="glass-card p-6 mb-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-medium text-gray-900">Filter Deals</h3>
+        <h3 className="text-lg font-medium" style={{ color: 'var(--text-primary)' }}>Filter Deals</h3>
         {hasActiveFilters && (
           <button
             onClick={handleClearFilters}
-            className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+            className="text-sm font-medium" style={{ color: 'var(--color-primary)' }}
           >
             Clear All
           </button>
@@ -59,7 +59,7 @@ const DealFilters = ({ onFiltersChange, loading = false }) => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         <div className="col-span-full md:col-span-2">
-          <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="search" className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
             Search Products
           </label>
           <div className="relative">
@@ -70,10 +70,10 @@ const DealFilters = ({ onFiltersChange, loading = false }) => {
               value={filters.search}
               onChange={handleInputChange}
               placeholder="Search by product name…"
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="glass-input w-full pl-10 pr-3 py-2"
             />
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="h-5 w-5" style={{ color: 'var(--text-tertiary)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
@@ -81,7 +81,7 @@ const DealFilters = ({ onFiltersChange, loading = false }) => {
         </div>
 
         <div>
-          <label htmlFor="merchant" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="merchant" className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
             Merchant
           </label>
           <select
@@ -89,7 +89,7 @@ const DealFilters = ({ onFiltersChange, loading = false }) => {
             name="merchant"
             value={filters.merchant}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="glass-input w-full px-3 py-2"
           >
             <option value="">All Merchants</option>
             {KENYA_MERCHANTS.map((m) => (
@@ -99,7 +99,7 @@ const DealFilters = ({ onFiltersChange, loading = false }) => {
         </div>
 
         <div>
-          <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="category" className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
             Category
           </label>
           <select
@@ -107,7 +107,7 @@ const DealFilters = ({ onFiltersChange, loading = false }) => {
             name="category"
             value={filters.category}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="glass-input w-full px-3 py-2"
           >
             <option value="">All Categories</option>
             {DEAL_CATEGORIES.map((c) => (
@@ -117,7 +117,7 @@ const DealFilters = ({ onFiltersChange, loading = false }) => {
         </div>
 
         <div>
-          <label htmlFor="minPrice" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="minPrice" className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
             Min Price (KES)
           </label>
           <input
@@ -129,12 +129,12 @@ const DealFilters = ({ onFiltersChange, loading = false }) => {
             placeholder="0"
             min="0"
             step="1"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="glass-input w-full px-3 py-2"
           />
         </div>
 
         <div>
-          <label htmlFor="maxPrice" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="maxPrice" className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
             Max Price (KES)
           </label>
           <input
@@ -146,12 +146,12 @@ const DealFilters = ({ onFiltersChange, loading = false }) => {
             placeholder="Any"
             min="0"
             step="1"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="glass-input w-full px-3 py-2"
           />
         </div>
 
         <div>
-          <label htmlFor="isActive" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="isActive" className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
             Status
           </label>
           <select
@@ -159,7 +159,7 @@ const DealFilters = ({ onFiltersChange, loading = false }) => {
             name="isActive"
             value={filters.isActive}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="glass-input w-full px-3 py-2"
           >
             <option value="all">All Deals</option>
             <option value="true">Active Only</option>
@@ -169,10 +169,11 @@ const DealFilters = ({ onFiltersChange, loading = false }) => {
       </div>
 
       {loading && (
-        <div className="mt-4 pt-4 border-t border-gray-200">
+        <div className="mt-4 pt-4">
+          <div className="glass-divider mb-4"></div>
           <div className="flex items-center justify-center">
-            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-            <span className="ml-2 text-sm text-gray-600">Filtering deals…</span>
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2" style={{ borderColor: 'var(--color-primary)' }}></div>
+            <span className="ml-2 text-sm" style={{ color: 'var(--text-secondary)' }}>Filtering deals…</span>
           </div>
         </div>
       )}

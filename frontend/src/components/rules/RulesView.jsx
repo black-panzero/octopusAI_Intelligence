@@ -77,11 +77,11 @@ const RulesView = ({ onNavigate }) => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-emerald-600 to-teal-700 rounded-lg shadow-lg p-6 text-white">
+      <div className="glass-card p-6 text-white" style={{ background: 'var(--brand-gradient)' }}>
         <div className="flex items-start justify-between flex-wrap gap-4">
           <div>
             <h1 className="text-2xl font-bold mb-1">Price Tracking &amp; Rules</h1>
-            <p className="text-emerald-100 text-sm">
+            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.85)' }}>
               Track products you care about. Set a target price to get alerted —
               or to auto-add to your cart when a merchant drops below it.
             </p>
@@ -89,10 +89,10 @@ const RulesView = ({ onNavigate }) => {
           <button
             onClick={handleEvaluate}
             disabled={evaluating || rules.length === 0}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-md font-semibold shadow ${
+            className={`glass-btn inline-flex items-center gap-2 px-4 py-2 font-semibold shadow ${
               evaluating || rules.length === 0
-                ? 'bg-white/60 text-emerald-900 cursor-not-allowed'
-                : 'bg-white text-emerald-700 hover:bg-emerald-50'
+                ? 'glass-btn-ghost opacity-60 cursor-not-allowed'
+                : 'glass-btn-surface'
             }`}
           >
             {evaluating ? 'Evaluating…' : 'Evaluate now'}
@@ -100,19 +100,19 @@ const RulesView = ({ onNavigate }) => {
         </div>
       </div>
 
-      {loading && <p className="text-sm text-gray-500">Loading rules…</p>}
+      {loading && <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>Loading rules…</p>}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-md p-3 text-sm text-red-700">
+        <div className="glass-card p-3 text-sm" style={{ background: 'var(--color-red-soft)', borderColor: 'var(--color-red)', color: 'var(--color-red)' }}>
           {error}
         </div>
       )}
 
       {!loading && rules.length === 0 && (
-        <div className="bg-white border border-dashed border-gray-300 rounded-lg p-10 text-center">
-          <p className="text-gray-600 mb-4">You aren't tracking anything yet.</p>
+        <div className="glass-card p-10 text-center" style={{ borderStyle: 'dashed' }}>
+          <p className="mb-4" style={{ color: 'var(--text-secondary)' }}>You aren't tracking anything yet.</p>
           <button
             onClick={() => onNavigate?.('search')}
-            className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+            className="glass-btn glass-btn-primary inline-flex items-center gap-2 px-4 py-2"
           >
             Find something to track
           </button>
@@ -123,22 +123,23 @@ const RulesView = ({ onNavigate }) => {
         {rules.map((r) => (
           <div
             key={r.id}
-            className={`bg-white rounded-lg border p-4 ${
-              r.triggered ? 'border-green-400 ring-1 ring-green-300' : 'border-gray-200'
+            className={`glass-card p-4 ${
+              r.triggered ? 'ring-1' : ''
             }`}
+            style={r.triggered ? { borderColor: 'var(--color-green)', boxShadow: '0 0 0 1px var(--color-green-soft)' } : {}}
           >
             <div className="flex items-start justify-between gap-2 mb-3">
               <div className="min-w-0">
-                <p className="font-semibold text-gray-900 truncate">{r.product_name}</p>
-                <p className="text-xs text-gray-500 truncate">
-                  {[r.brand, r.category].filter(Boolean).join(' • ') || '—'}
+                <p className="font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{r.product_name}</p>
+                <p className="text-xs truncate" style={{ color: 'var(--text-tertiary)' }}>
+                  {[r.brand, r.category].filter(Boolean).join(' · ') || '—'}
                 </p>
               </div>
               <span
                 className={`text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full ${
                   r.action === 'add_to_cart'
-                    ? 'bg-indigo-100 text-indigo-700'
-                    : 'bg-amber-100 text-amber-800'
+                    ? 'badge-purple'
+                    : 'badge-amber'
                 }`}
               >
                 {r.action === 'add_to_cart' ? 'Auto add' : 'Alert'}
@@ -147,24 +148,24 @@ const RulesView = ({ onNavigate }) => {
 
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div>
-                <p className="text-gray-500 text-xs">Target</p>
-                <p className="font-medium text-gray-900">
+                <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Target</p>
+                <p className="font-medium" style={{ color: 'var(--text-primary)' }}>
                   {r.target_price != null ? formatKES(r.target_price) : 'Track only'}
                 </p>
               </div>
               <div>
-                <p className="text-gray-500 text-xs">Current best</p>
-                <p className="font-medium text-gray-900">
+                <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Current best</p>
+                <p className="font-medium" style={{ color: 'var(--text-primary)' }}>
                   {r.current_price != null ? formatKES(r.current_price) : '—'}
                   {r.current_merchant && (
-                    <span className="text-gray-500 text-xs"> @ {r.current_merchant}</span>
+                    <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}> @ {r.current_merchant}</span>
                   )}
                 </p>
               </div>
             </div>
 
             {r.triggered && (
-              <div className="mt-3 bg-green-50 border border-green-200 rounded px-2 py-1.5 text-xs text-green-800">
+              <div className="mt-3 badge-green rounded-[var(--r-md)] px-2 py-1.5 text-xs">
                 ✓ Below target — hit "Evaluate now" to execute.
               </div>
             )}
@@ -172,22 +173,23 @@ const RulesView = ({ onNavigate }) => {
             <div className="mt-3 flex items-center justify-between">
               <button
                 onClick={() => handleToggleHistory(r)}
-                className="text-xs font-medium text-blue-600 hover:text-blue-800"
+                className="text-xs font-medium" style={{ color: 'var(--color-primary)' }}
               >
                 {historyOpenFor === r.id ? '▲ Hide history' : '📈 View history'}
               </button>
               <button
                 onClick={() => handleDelete(r.id)}
-                className="text-xs text-red-600 hover:text-red-800"
+                className="text-xs" style={{ color: 'var(--color-red)' }}
               >
                 Remove
               </button>
             </div>
 
             {historyOpenFor === r.id && (
-              <div className="mt-3 border-t border-gray-100 pt-3">
+              <div className="mt-3 pt-3">
+                <div className="glass-divider mb-3"></div>
                 {historyLoading && (
-                  <p className="text-xs text-gray-500">Loading price history…</p>
+                  <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Loading price history…</p>
                 )}
                 {!historyLoading && historyData && (
                   <PriceHistoryChart data={historyData} width={520} height={200} />

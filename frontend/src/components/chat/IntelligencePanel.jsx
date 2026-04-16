@@ -127,22 +127,23 @@ const deriveIntelForChat = (messages, invocationsByIdx) => {
 const Disclosure = ({ icon, title, count, children, defaultOpen = false }) => {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="border-b border-gray-100 last:border-b-0">
+    <div className="glass-border-b last:border-b-0">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between py-2.5 px-3 hover:bg-gray-50 focus:outline-none"
+        className="w-full flex items-center justify-between py-2.5 px-3 glass-hover focus:outline-none"
       >
-        <span className="flex items-center gap-2 text-sm text-gray-800">
+        <span className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-primary)' }}>
           <span className="text-base">{icon}</span>
           <span className="font-medium">{title}</span>
           {count != null && (
-            <span className="text-[10px] bg-gray-100 text-gray-600 rounded-full px-1.5 py-0.5">
+            <span className="text-[10px] glass-subtle rounded-full px-1.5 py-0.5" style={{ color: 'var(--text-secondary)' }}>
               {count}
             </span>
           )}
         </span>
         <svg
-          className={`w-4 h-4 text-gray-400 transform transition-transform ${open ? 'rotate-180' : ''}`}
+          className={`w-4 h-4 transform transition-transform ${open ? 'rotate-180' : ''}`}
+          style={{ color: 'var(--text-tertiary)' }}
           fill="none" stroke="currentColor" viewBox="0 0 24 24"
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
@@ -169,15 +170,15 @@ const Disclosure = ({ icon, title, count, children, defaultOpen = false }) => {
 const ProductRow = ({ product }) => (
   <div className="flex items-center gap-2 py-1">
     {product.image_url ? (
-      <img src={product.image_url} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0 bg-gray-100"
+      <img src={product.image_url} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0 glass-light"
            onError={(e) => { e.currentTarget.style.visibility = 'hidden'; }} />
     ) : (
-      <div className="w-8 h-8 rounded bg-gray-100 flex-shrink-0" />
+      <div className="w-8 h-8 rounded glass-light flex-shrink-0" />
     )}
     <div className="flex-1 min-w-0">
-      <p className="text-sm text-gray-900 truncate">{product.display_name}</p>
-      <p className="text-[11px] text-gray-500 truncate">
-        {[product.brand, product.category, product.size].filter(Boolean).join(' • ')}
+      <p className="text-sm truncate" style={{ color: 'var(--text-primary)' }}>{product.display_name}</p>
+      <p className="text-[11px] truncate" style={{ color: 'var(--text-tertiary)' }}>
+        {[product.brand, product.category, product.size].filter(Boolean).join(' · ')}
         {product.rating != null && ` · ${formatRating(product.rating, product.review_count)}`}
       </p>
     </div>
@@ -204,19 +205,19 @@ const IntelligencePanel = ({ collapsed, onToggle }) => {
   ].filter(Boolean).join(' · ');
 
   return (
-    <div className="flex flex-col h-full bg-white border-l border-gray-200">
-      <div className="px-3 py-2 border-b border-gray-200 flex items-center justify-between">
+    <div className="flex flex-col h-full glass glass-border-l">
+      <div className="px-3 py-2 glass-border-b flex items-center justify-between">
         <div className="min-w-0">
-          <p className="text-xs uppercase tracking-wide font-semibold text-gray-500">
+          <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: 'var(--text-tertiary)' }}>
             {collapsed ? 'Intel' : 'This chat'}
           </p>
           {!collapsed && summary && (
-            <p className="text-[11px] text-gray-500 truncate">{summary}</p>
+            <p className="text-[11px] truncate" style={{ color: 'var(--text-tertiary)' }}>{summary}</p>
           )}
         </div>
         <button
           onClick={onToggle}
-          className="text-xs text-gray-500 hover:text-gray-800 px-1"
+          className="text-xs px-1" style={{ color: 'var(--text-tertiary)' }}
           title={collapsed ? 'Expand' : 'Collapse'}
           aria-label={collapsed ? 'Expand intelligence panel' : 'Collapse intelligence panel'}
         >
@@ -225,16 +226,16 @@ const IntelligencePanel = ({ collapsed, onToggle }) => {
       </div>
 
       {!collapsed && (
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto glass-scroll">
           {!conversationId && messages.length === 0 && (
-            <p className="px-3 py-4 text-xs text-gray-500 italic">
+            <p className="px-3 py-4 text-xs italic" style={{ color: 'var(--text-tertiary)' }}>
               Start chatting — items and decisions from this conversation appear here.
             </p>
           )}
 
           <Disclosure icon="🔍" title="Products explored" count={intel.products.length} defaultOpen>
             {intel.products.length === 0 ? (
-              <p className="text-xs text-gray-500 italic">Nothing yet.</p>
+              <p className="text-xs italic" style={{ color: 'var(--text-tertiary)' }}>Nothing yet.</p>
             ) : (
               <div className="space-y-1">
                 {intel.products.slice(0, 20).map((p) => (
@@ -250,7 +251,7 @@ const IntelligencePanel = ({ collapsed, onToggle }) => {
             count={chatCartCount}
           >
             {chatCartCount === 0 ? (
-              <p className="text-xs text-gray-500 italic">
+              <p className="text-xs italic" style={{ color: 'var(--text-tertiary)' }}>
                 {liveCartCount > 0
                   ? `You have ${liveCartCount} item${liveCartCount === 1 ? '' : 's'} in cart from other conversations.`
                   : 'Ask the AI to add something to see it here.'}
@@ -262,16 +263,16 @@ const IntelligencePanel = ({ collapsed, onToggle }) => {
                     <li key={it.id} className="flex items-center justify-between text-sm">
                       <span className="truncate">
                         {it.quantity}× {it.product_name}
-                        <span className="text-gray-400"> · {it.merchant}</span>
+                        <span style={{ color: 'var(--text-tertiary)' }}> · {it.merchant}</span>
                       </span>
-                      <span className="font-medium text-gray-800 ml-2 flex-shrink-0">
+                      <span className="font-medium ml-2 flex-shrink-0" style={{ color: 'var(--text-primary)' }}>
                         {formatKES(it.subtotal)}
                       </span>
                     </li>
                   ))}
                 </ul>
                 {liveCartCount > chatCartCount && (
-                  <p className="mt-2 text-[11px] text-gray-500">
+                  <p className="mt-2 text-[11px]" style={{ color: 'var(--text-tertiary)' }}>
                     {liveCartCount - chatCartCount} more item{liveCartCount - chatCartCount === 1 ? '' : 's'} in cart from elsewhere. Total {formatKES(liveCartTotal || 0)}.
                   </p>
                 )}
@@ -281,26 +282,24 @@ const IntelligencePanel = ({ collapsed, onToggle }) => {
 
           <Disclosure icon="📝" title="Shopping lists touched" count={intel.lists.length}>
             {intel.lists.length === 0 ? (
-              <p className="text-xs text-gray-500 italic">No lists referenced in this chat.</p>
+              <p className="text-xs italic" style={{ color: 'var(--text-tertiary)' }}>No lists referenced in this chat.</p>
             ) : (
               <ul className="space-y-1.5">
                 {intel.lists.map((l) => (
                   <li key={l.id} className="text-sm">
                     <div className="flex items-center justify-between">
                       <span className="truncate">
-                        <span className={`text-[10px] uppercase tracking-wide mr-1 ${
-                          l.kind === 'wishlist' ? 'text-pink-600' : 'text-blue-600'
-                        }`}>
+                        <span className="text-[10px] uppercase tracking-wide mr-1" style={{ color: l.kind === 'wishlist' ? 'var(--color-fuchsia)' : 'var(--color-primary)' }}>
                           {l.kind || 'list'}
                         </span>
                         {l.title}
                       </span>
-                      <span className="text-xs text-gray-500 ml-2 flex-shrink-0">
+                      <span className="text-xs ml-2 flex-shrink-0" style={{ color: 'var(--text-tertiary)' }}>
                         {l.item_count ?? (l.items?.length ?? 0)} items
                       </span>
                     </div>
                     {l.last_send_summary && (
-                      <p className="text-[11px] text-green-700 ml-10">
+                      <p className="text-[11px] ml-10" style={{ color: 'var(--color-green)' }}>
                         Sent to cart: {l.last_send_summary.added} added
                         {l.last_send_summary.skipped ? `, ${l.last_send_summary.skipped} skipped` : ''}.
                       </p>
@@ -313,13 +312,13 @@ const IntelligencePanel = ({ collapsed, onToggle }) => {
 
           <Disclosure icon="📈" title="Tracking rules set" count={intel.rules.length}>
             {intel.rules.length === 0 ? (
-              <p className="text-xs text-gray-500 italic">No tracking set in this chat.</p>
+              <p className="text-xs italic" style={{ color: 'var(--text-tertiary)' }}>No tracking set in this chat.</p>
             ) : (
               <ul className="space-y-1">
                 {intel.rules.map((r) => (
                   <li key={r.id} className="flex items-center justify-between text-sm">
                     <span className="truncate">{r.product_name || `Product #${r.id}`}</span>
-                    <span className="text-xs text-gray-500 ml-2 flex-shrink-0">
+                    <span className="text-xs ml-2 flex-shrink-0" style={{ color: 'var(--text-tertiary)' }}>
                       {r.action === 'add_to_cart' ? 'Auto' : 'Alert'}
                       {r.target_price != null && ` · ${formatKES(r.target_price)}`}
                     </span>
@@ -331,7 +330,7 @@ const IntelligencePanel = ({ collapsed, onToggle }) => {
 
           <Disclosure icon="🏪" title="Merchants seen" count={intel.merchants.length}>
             {intel.merchants.length === 0 ? (
-              <p className="text-xs text-gray-500 italic">No merchants referenced yet.</p>
+              <p className="text-xs italic" style={{ color: 'var(--text-tertiary)' }}>No merchants referenced yet.</p>
             ) : (
               <ul className="space-y-1">
                 {intel.merchants
@@ -339,7 +338,7 @@ const IntelligencePanel = ({ collapsed, onToggle }) => {
                   .map((m) => (
                     <li key={m.name} className="flex items-center justify-between text-sm">
                       <span className="truncate">{m.name}</span>
-                      <span className="text-xs text-gray-500 ml-2 flex-shrink-0">
+                      <span className="text-xs ml-2 flex-shrink-0" style={{ color: 'var(--text-tertiary)' }}>
                         {m.min_price != null ? `from ${formatKES(m.min_price)}` : ''}
                       </span>
                     </li>

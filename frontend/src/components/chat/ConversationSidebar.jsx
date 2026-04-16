@@ -58,33 +58,33 @@ const ConversationSidebar = () => {
   }, [conversations]);
 
   return (
-    <aside className="flex flex-col h-full bg-gray-50 border-r border-gray-200">
-      <div className="px-3 py-2 border-b border-gray-200 flex items-center justify-between">
-        <span className="text-xs uppercase tracking-wide font-semibold text-gray-500">
+    <aside className="flex flex-col h-full glass-light glass-border-l" style={{ borderLeft: 'none', borderRight: '1px solid var(--glass-border-subtle)' }}>
+      <div className="px-3 py-2 glass-border-b flex items-center justify-between">
+        <span className="text-xs uppercase tracking-wide font-semibold" style={{ color: 'var(--text-tertiary)' }}>
           Chats
         </span>
         <button
           onClick={newOne}
-          className="text-xs font-semibold text-fuchsia-600 hover:text-fuchsia-800"
+          className="text-xs font-semibold" style={{ color: 'var(--color-fuchsia)' }}
           title="Start a new conversation"
         >
           + New
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto py-2">
+      <div className="flex-1 overflow-y-auto py-2 glass-scroll">
         {!conversationsLoaded && (
-          <p className="px-3 text-xs text-gray-400">Loading…</p>
+          <p className="px-3 text-xs" style={{ color: 'var(--text-tertiary)' }}>Loading…</p>
         )}
         {conversationsLoaded && conversations.length === 0 && (
-          <p className="px-3 text-xs text-gray-400">
+          <p className="px-3 text-xs" style={{ color: 'var(--text-tertiary)' }}>
             No saved chats yet.
           </p>
         )}
 
         {groups.map(([bucket, list]) => (
           <div key={bucket} className="mb-3">
-            <p className="px-3 text-[10px] font-semibold tracking-wide text-gray-400 uppercase mb-1">
+            <p className="px-3 text-[10px] font-semibold tracking-wide uppercase mb-1" style={{ color: 'var(--text-tertiary)' }}>
               {bucket}
             </p>
             <ul>
@@ -93,21 +93,25 @@ const ConversationSidebar = () => {
                 return (
                   <li key={c.id} className="px-1.5">
                     <div
-                      className={`group flex items-center gap-2 rounded-md px-2 py-1.5 cursor-pointer ${
-                        active ? 'bg-fuchsia-100 text-fuchsia-900' : 'hover:bg-gray-200/60 text-gray-800'
+                      className={`group flex items-center gap-2 rounded-[var(--r-md)] px-2 py-1.5 cursor-pointer ${
+                        active ? 'glass-heavy' : 'glass-hover'
                       }`}
+                      style={active ? { color: 'var(--color-fuchsia)' } : { color: 'var(--text-primary)' }}
                       onClick={() => select(c.id)}
                     >
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{c.title || 'Untitled'}</p>
-                        <p className="text-[10px] text-gray-400">
+                        <p className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
                           {timeLabel(c.updated_at || c.created_at)}
                         </p>
                       </div>
                       <button
                         onClick={(e) => { e.stopPropagation(); del(c.id); }}
                         title="Delete"
-                        className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-600 transition-opacity"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        style={{ color: 'var(--text-tertiary)' }}
+                        onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-red)'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-tertiary)'; }}
                       >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"

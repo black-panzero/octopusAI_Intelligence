@@ -35,7 +35,8 @@ const IconBubble = ({ onClick }) => (
     layoutId="chat-widget"
     onClick={onClick}
     aria-label="Open SmartBuy chat"
-    className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-fuchsia-600 text-white shadow-lg shadow-fuchsia-600/30 flex items-center justify-center hover:bg-fuchsia-700"
+    className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full text-white shadow-lg flex items-center justify-center"
+    style={{ background: 'var(--color-fuchsia)', boxShadow: '0 4px 16px rgba(217, 70, 239, 0.3)' }}
     initial={{ scale: 0, opacity: 0 }}
     animate={{ scale: 1, opacity: 1 }}
     exit={{ scale: 0, opacity: 0, transition: { duration: 0.15 } }}
@@ -52,16 +53,16 @@ const IconBubble = ({ onClick }) => (
 );
 
 const PanelChrome = ({ mode, onMinimize, onToggleFull, onClose }) => (
-  <div className="flex items-center justify-between px-3 py-2 bg-fuchsia-600 text-white rounded-t-[16px]">
+  <div className="flex items-center justify-between px-3 py-2 text-white" style={{ background: 'var(--color-fuchsia)', borderRadius: '16px 16px 0 0' }}>
     <div className="flex items-center gap-2 min-w-0">
-      <span className="inline-block w-2 h-2 rounded-full bg-white/80" />
+      <span className="inline-block w-2 h-2 rounded-full" style={{ background: 'rgba(255,255,255,0.8)' }} />
       <p className="text-sm font-semibold truncate">SmartBuy Assistant</p>
     </div>
     <div className="flex items-center gap-1">
       <button
         onClick={onToggleFull}
         title={mode === 'full' ? 'Minimize' : 'Expand'}
-        className="p-1.5 rounded-md hover:bg-white/15 focus:outline-none"
+        className="p-1.5 rounded-[var(--r-md)] hover:bg-white/15 focus:outline-none"
       >
         {mode === 'full' ? (
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -78,7 +79,7 @@ const PanelChrome = ({ mode, onMinimize, onToggleFull, onClose }) => (
       <button
         onClick={onMinimize}
         title="Close"
-        className="p-1.5 rounded-md hover:bg-white/15 focus:outline-none"
+        className="p-1.5 rounded-[var(--r-md)] hover:bg-white/15 focus:outline-none"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -130,7 +131,7 @@ const FloatingChatWidget = ({ hidden = false }) => {
           layoutId="chat-widget"
           role="dialog"
           aria-label="SmartBuy chat"
-          className="z-50 bg-white shadow-2xl border border-gray-200 overflow-hidden flex flex-col"
+          className="z-50 glass-solid glass-border glass-shadow-lg overflow-hidden flex flex-col"
           style={mode === 'full' ? FULL : MINI}
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}

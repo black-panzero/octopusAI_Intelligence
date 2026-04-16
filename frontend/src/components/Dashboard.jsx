@@ -7,52 +7,52 @@ import { formatKES, formatDate, computeDiscount, formatRating } from '../lib/for
 import { extractErrorMessage } from '../lib/errors';
 
 const StatTile = ({ name, value, icon, color, description }) => {
-  const classes = {
-    blue:   'bg-blue-50 text-blue-600 border-blue-200',
-    green:  'bg-green-50 text-green-600 border-green-200',
-    purple: 'bg-purple-50 text-purple-600 border-purple-200',
-    orange: 'bg-orange-50 text-orange-600 border-orange-200',
-  }[color] || 'bg-blue-50 text-blue-600 border-blue-200';
+  const badgeClass = {
+    blue:   'badge-blue',
+    green:  'badge-green',
+    purple: 'badge-purple',
+    orange: 'badge-amber',
+  }[color] || 'badge-blue';
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
+    <div className="glass-card p-6 hover:shadow-lg transition-shadow duration-200">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-600">{name}</p>
-          <p className="text-3xl font-bold text-gray-900 mt-2">
+          <p className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>{name}</p>
+          <p className="text-3xl font-bold mt-2" style={{ color: 'var(--text-primary)' }}>
             {Number(value).toLocaleString('en-KE')}
           </p>
-          <p className="text-xs text-gray-500 mt-1">{description}</p>
+          <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>{description}</p>
         </div>
-        <div className={`p-3 rounded-full text-2xl ${classes}`}>{icon}</div>
+        <div className={`p-3 rounded-full text-2xl ${badgeClass}`}>{icon}</div>
       </div>
     </div>
   );
 };
 
 const BestDealCard = ({ deal, onAdd }) => (
-  <div className="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow">
+  <div className="glass-card p-3 hover:shadow-lg transition-shadow">
     <div className="flex items-start justify-between gap-2 mb-2">
       <div className="min-w-0">
-        <p className="font-semibold text-gray-900 text-sm truncate">{deal.product.display_name}</p>
-        <p className="text-[11px] text-gray-500 truncate">
-          {[deal.product.brand, deal.product.category, deal.product.size].filter(Boolean).join(' • ')}
+        <p className="font-semibold text-sm truncate" style={{ color: 'var(--text-primary)' }}>{deal.product.display_name}</p>
+        <p className="text-[11px] truncate" style={{ color: 'var(--text-tertiary)' }}>
+          {[deal.product.brand, deal.product.category, deal.product.size].filter(Boolean).join(' · ')}
         </p>
       </div>
-      <span className="text-[10px] uppercase tracking-wide bg-green-600 text-white rounded px-1.5 py-0.5">
+      <span className="text-[10px] uppercase tracking-wide rounded px-1.5 py-0.5 badge-green font-semibold">
         -{deal.savings_pct.toFixed(0)}%
       </span>
     </div>
     <div className="flex items-baseline gap-2 mb-2">
-      <span className="text-lg font-bold text-blue-600">{formatKES(deal.min_price)}</span>
-      <span className="text-xs text-gray-500 line-through">{formatKES(deal.max_price)}</span>
+      <span className="text-lg font-bold" style={{ color: 'var(--color-primary)' }}>{formatKES(deal.min_price)}</span>
+      <span className="text-xs line-through" style={{ color: 'var(--text-tertiary)' }}>{formatKES(deal.max_price)}</span>
     </div>
-    <p className="text-[11px] text-gray-600 mb-2 truncate">
-      Cheapest at <span className="font-medium text-gray-900">{deal.best_merchant}</span>
+    <p className="text-[11px] mb-2 truncate" style={{ color: 'var(--text-secondary)' }}>
+      Cheapest at <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{deal.best_merchant}</span>
       {' · '}{deal.offer_count} merchants
     </p>
     <button
       onClick={() => onAdd?.(deal)}
-      className="w-full text-xs font-semibold bg-blue-600 text-white px-2 py-1.5 rounded hover:bg-blue-700"
+      className="glass-btn glass-btn-primary w-full text-xs font-semibold px-2 py-1.5"
     >
       + Add cheapest
     </button>
@@ -60,25 +60,26 @@ const BestDealCard = ({ deal, onAdd }) => (
 );
 
 const PriceDropCard = ({ drop, onAdd }) => (
-  <div className="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow">
+  <div className="glass-card p-3 hover:shadow-lg transition-shadow">
     <div className="flex items-start justify-between gap-2 mb-2">
       <div className="min-w-0">
-        <p className="font-semibold text-gray-900 text-sm truncate">{drop.product.display_name}</p>
-        <p className="text-[11px] text-gray-500 truncate">
+        <p className="font-semibold text-sm truncate" style={{ color: 'var(--text-primary)' }}>{drop.product.display_name}</p>
+        <p className="text-[11px] truncate" style={{ color: 'var(--text-tertiary)' }}>
           {drop.merchant} · {formatDate(drop.observed_at)}
         </p>
       </div>
-      <span className="text-[10px] uppercase tracking-wide bg-rose-600 text-white rounded px-1.5 py-0.5">
+      <span className="text-[10px] uppercase tracking-wide badge-red rounded px-1.5 py-0.5 font-semibold">
         ↓ {drop.drop_pct.toFixed(0)}%
       </span>
     </div>
     <div className="flex items-baseline gap-2 mb-2">
-      <span className="text-lg font-bold text-rose-600">{formatKES(drop.current_price)}</span>
-      <span className="text-xs text-gray-500 line-through">{formatKES(drop.previous_price)}</span>
+      <span className="text-lg font-bold" style={{ color: 'var(--color-red)' }}>{formatKES(drop.current_price)}</span>
+      <span className="text-xs line-through" style={{ color: 'var(--text-tertiary)' }}>{formatKES(drop.previous_price)}</span>
     </div>
     <button
       onClick={() => onAdd?.(drop)}
-      className="w-full text-xs font-semibold bg-rose-600 text-white px-2 py-1.5 rounded hover:bg-rose-700"
+      className="glass-btn w-full text-xs font-semibold px-2 py-1.5 text-white"
+      style={{ background: 'var(--color-red)' }}
     >
       + Add to cart
     </button>
@@ -86,22 +87,23 @@ const PriceDropCard = ({ drop, onAdd }) => (
 );
 
 const TopRatedCard = ({ item, onAdd }) => (
-  <div className="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow">
-    <p className="font-semibold text-gray-900 text-sm truncate">{item.product.display_name}</p>
-    <p className="text-[11px] text-gray-500 truncate">
-      {[item.product.brand, item.product.category].filter(Boolean).join(' • ')}
+  <div className="glass-card p-3 hover:shadow-lg transition-shadow">
+    <p className="font-semibold text-sm truncate" style={{ color: 'var(--text-primary)' }}>{item.product.display_name}</p>
+    <p className="text-[11px] truncate" style={{ color: 'var(--text-tertiary)' }}>
+      {[item.product.brand, item.product.category].filter(Boolean).join(' · ')}
     </p>
-    <p className="text-xs text-amber-600 mt-1">
+    <p className="text-xs mt-1" style={{ color: 'var(--color-amber)' }}>
       {formatRating(item.product.rating, item.product.review_count)}
     </p>
     <div className="flex items-baseline justify-between mt-2">
-      {item.min_price != null && <span className="text-sm font-bold text-blue-600">{formatKES(item.min_price)}</span>}
-      {item.merchant && <span className="text-[10px] text-gray-500 truncate max-w-[100px]">@ {item.merchant}</span>}
+      {item.min_price != null && <span className="text-sm font-bold" style={{ color: 'var(--color-primary)' }}>{formatKES(item.min_price)}</span>}
+      {item.merchant && <span className="text-[10px] truncate max-w-[100px]" style={{ color: 'var(--text-tertiary)' }}>@ {item.merchant}</span>}
     </div>
     {item.merchant_id && item.product?.id && (
       <button
         onClick={() => onAdd?.(item)}
-        className="mt-2 w-full text-xs font-semibold bg-amber-600 text-white px-2 py-1.5 rounded hover:bg-amber-700"
+        className="glass-btn mt-2 w-full text-xs font-semibold px-2 py-1.5 text-white"
+        style={{ background: 'var(--color-amber)' }}
       >
         + Add
       </button>
@@ -156,10 +158,10 @@ const Dashboard = ({ onNavigate }) => {
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div key={i} className="glass-card p-6">
               <div className="animate-pulse">
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+                <div className="h-4 rounded w-3/4 mb-2" style={{ background: 'var(--glass-bg-light)' }}></div>
+                <div className="h-8 rounded w-1/2" style={{ background: 'var(--glass-bg-light)' }}></div>
               </div>
             </div>
           ))}
@@ -170,12 +172,12 @@ const Dashboard = ({ onNavigate }) => {
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-6 flex items-center">
+      <div className="glass-card p-6 flex items-center" style={{ background: 'var(--color-red-soft)', borderColor: 'var(--color-red)' }}>
         <div className="flex-1">
-          <h3 className="text-sm font-medium text-red-800">Error Loading Dashboard</h3>
-          <p className="text-sm text-red-700 mt-1">{error}</p>
+          <h3 className="text-sm font-medium" style={{ color: 'var(--color-red)' }}>Error Loading Dashboard</h3>
+          <p className="text-sm mt-1" style={{ color: 'var(--color-red)' }}>{error}</p>
         </div>
-        <button onClick={fetchAll} className="px-3 py-2 text-sm font-medium text-red-800 hover:bg-red-100 rounded-md">
+        <button onClick={fetchAll} className="glass-btn glass-btn-ghost px-3 py-2 text-sm font-medium" style={{ color: 'var(--color-red)' }}>
           Retry
         </button>
       </div>
@@ -196,17 +198,17 @@ const Dashboard = ({ onNavigate }) => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg shadow-lg p-6 text-white">
+      <div className="glass-card p-6 text-white" style={{ background: 'var(--brand-gradient)' }}>
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <h1 className="text-2xl font-bold mb-2">Welcome to SmartBuy</h1>
-            <p className="text-blue-100">
+            <p style={{ color: 'rgba(255,255,255,0.85)' }}>
               Compare deals across Kenyan merchants. Track prices. Save more.
             </p>
           </div>
           <button
             onClick={() => onNavigate?.('search')}
-            className="inline-flex items-center gap-2 bg-white text-blue-700 font-semibold px-4 py-2 rounded-md shadow hover:bg-blue-50"
+            className="glass-btn glass-btn-surface inline-flex items-center gap-2 font-semibold px-4 py-2"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
@@ -223,7 +225,7 @@ const Dashboard = ({ onNavigate }) => {
 
       {bestDeals.length > 0 && (
         <section>
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">🔥 Best deals right now</h2>
+          <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>🔥 Best deals right now</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {bestDeals.map((d) => (
               <BestDealCard key={d.product.id} deal={d} onAdd={handleAdd} />
@@ -234,7 +236,7 @@ const Dashboard = ({ onNavigate }) => {
 
       {priceDrops.length > 0 && (
         <section>
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">↓ Recent price drops</h2>
+          <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>↓ Recent price drops</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {priceDrops.map((d, i) => (
               <PriceDropCard key={`${d.product.id}-${i}`} drop={d} onAdd={handleAdd} />
@@ -245,7 +247,7 @@ const Dashboard = ({ onNavigate }) => {
 
       {topRated.length > 0 && (
         <section>
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">⭐ Top-rated products</h2>
+          <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>⭐ Top-rated products</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {topRated.map((t) => (
               <TopRatedCard key={t.product.id} item={t} onAdd={handleAdd} />
@@ -255,23 +257,23 @@ const Dashboard = ({ onNavigate }) => {
       )}
 
       {recent.length > 0 && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Deals</h2>
+        <div className="glass-card p-6">
+          <h2 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>Recent Deals</h2>
           <div className="space-y-3">
             {recent.slice(0, 5).map((deal) => {
               const { final, savings } = computeDiscount(deal.price, deal.discount);
               const show = savings > 0 ? final : deal.price;
               return (
-                <div key={deal.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div key={deal.id} className="flex items-center justify-between p-3 glass-light rounded-[var(--r-md)]">
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 truncate">{deal.product_name}</p>
-                    <p className="text-sm text-gray-500 truncate">
-                      {deal.merchant}{deal.category ? ` • ${deal.category}` : ''} • {formatDate(deal.created_at)}
+                    <p className="font-medium truncate" style={{ color: 'var(--text-primary)' }}>{deal.product_name}</p>
+                    <p className="text-sm truncate" style={{ color: 'var(--text-tertiary)' }}>
+                      {deal.merchant}{deal.category ? ` · ${deal.category}` : ''} · {formatDate(deal.created_at)}
                     </p>
                   </div>
                   <div className="text-right ml-4">
-                    <p className="font-semibold text-blue-600">{formatKES(show)}</p>
-                    <p className={`text-xs ${deal.is_active ? 'text-green-600' : 'text-red-600'}`}>
+                    <p className="font-semibold" style={{ color: 'var(--color-primary)' }}>{formatKES(show)}</p>
+                    <p className="text-xs" style={{ color: deal.is_active ? 'var(--color-green)' : 'var(--color-red)' }}>
                       {deal.is_active ? 'Active' : 'Inactive'}
                     </p>
                   </div>

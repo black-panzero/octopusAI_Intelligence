@@ -27,26 +27,26 @@ const CartView = ({ onNavigate }) => {
 
   if (loading && cart.items.length === 0) {
     return (
-      <div className="text-gray-500 text-sm">Loading cart…</div>
+      <div className="text-sm" style={{ color: 'var(--text-tertiary)' }}>Loading cart…</div>
     );
   }
 
   if (cart.items.length === 0) {
     return (
       <div className="space-y-6">
-        <div className="bg-gradient-to-r from-purple-600 to-indigo-700 rounded-lg shadow-lg p-6 text-white">
+        <div className="glass-card p-6 text-white" style={{ background: 'var(--brand-gradient)' }}>
           <h1 className="text-2xl font-bold mb-2">Your Universal Cart</h1>
-          <p className="text-indigo-100">
+          <p style={{ color: 'rgba(255,255,255,0.85)' }}>
             Cross-merchant cart. Add the cheapest offer from any store — we'll
             total it up and show your savings.
           </p>
         </div>
 
-        <div className="bg-white border border-dashed border-gray-300 rounded-lg p-10 text-center">
-          <p className="text-gray-600 mb-4">Your cart is empty.</p>
+        <div className="glass-card p-10 text-center" style={{ borderStyle: 'dashed' }}>
+          <p className="mb-4" style={{ color: 'var(--text-secondary)' }}>Your cart is empty.</p>
           <button
             onClick={() => onNavigate?.('search')}
-            className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+            className="glass-btn glass-btn-primary inline-flex items-center gap-2 px-4 py-2"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
@@ -61,19 +61,19 @@ const CartView = ({ onNavigate }) => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-purple-600 to-indigo-700 rounded-lg shadow-lg p-6 text-white">
+      <div className="glass-card p-6 text-white" style={{ background: 'var(--brand-gradient)' }}>
         <div className="flex items-start justify-between flex-wrap gap-4">
           <div>
             <h1 className="text-2xl font-bold mb-1">Your Universal Cart</h1>
-            <p className="text-indigo-100 text-sm">
+            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.85)' }}>
               {cart.item_count} item{cart.item_count === 1 ? '' : 's'} across {cart.merchant_totals.length} merchant{cart.merchant_totals.length === 1 ? '' : 's'}
             </p>
           </div>
           <div className="text-right">
-            <p className="text-xs uppercase tracking-wide text-indigo-200">Total</p>
+            <p className="text-xs uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.7)' }}>Total</p>
             <p className="text-3xl font-bold">{formatKES(cart.total)}</p>
             {cart.savings_vs_worst_split > 0 && (
-              <p className="text-xs mt-1 text-green-200">
+              <p className="text-xs mt-1" style={{ color: 'rgba(200,255,200,0.9)' }}>
                 You saved {formatKES(cart.savings_vs_worst_split)} vs worst-case
               </p>
             )}
@@ -82,7 +82,7 @@ const CartView = ({ onNavigate }) => {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-md p-3 text-sm text-red-700">
+        <div className="glass-card p-3 text-sm" style={{ background: 'var(--color-red-soft)', borderColor: 'var(--color-red)', color: 'var(--color-red)' }}>
           {error}
         </div>
       )}
@@ -92,14 +92,14 @@ const CartView = ({ onNavigate }) => {
           {cart.items.map((item) => (
             <div
               key={item.id}
-              className="bg-white border border-gray-200 rounded-lg p-4 flex items-center gap-4"
+              className="glass-card p-4 flex items-center gap-4"
             >
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-gray-900 truncate">{item.product_name}</p>
-                <p className="text-xs text-gray-500 truncate">
-                  {[item.brand, item.category].filter(Boolean).join(' • ') || '—'}
+                <p className="font-medium truncate" style={{ color: 'var(--text-primary)' }}>{item.product_name}</p>
+                <p className="text-xs truncate" style={{ color: 'var(--text-tertiary)' }}>
+                  {[item.brand, item.category].filter(Boolean).join(' · ') || '—'}
                 </p>
-                <p className="text-xs text-gray-700 mt-1">
+                <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
                   From <span className="font-medium">{item.merchant}</span> @ {formatKES(item.price)}
                 </p>
               </div>
@@ -107,7 +107,7 @@ const CartView = ({ onNavigate }) => {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => handleQty(item, -1)}
-                  className="w-8 h-8 rounded-md border border-gray-300 hover:bg-gray-50"
+                  className="glass-btn glass-btn-ghost w-8 h-8"
                   aria-label="Decrease"
                 >
                   −
@@ -115,7 +115,7 @@ const CartView = ({ onNavigate }) => {
                 <span className="min-w-[1.5rem] text-center font-medium">{item.quantity}</span>
                 <button
                   onClick={() => handleQty(item, 1)}
-                  className="w-8 h-8 rounded-md border border-gray-300 hover:bg-gray-50"
+                  className="glass-btn glass-btn-ghost w-8 h-8"
                   aria-label="Increase"
                 >
                   +
@@ -123,10 +123,10 @@ const CartView = ({ onNavigate }) => {
               </div>
 
               <div className="text-right min-w-[90px]">
-                <p className="font-semibold text-gray-900">{formatKES(item.subtotal)}</p>
+                <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{formatKES(item.subtotal)}</p>
                 <button
                   onClick={() => remove(item.id)}
-                  className="text-xs text-red-600 hover:text-red-800"
+                  className="text-xs hover:underline" style={{ color: 'var(--color-red)' }}
                 >
                   Remove
                 </button>
@@ -136,33 +136,34 @@ const CartView = ({ onNavigate }) => {
 
           <button
             onClick={handleClear}
-            className="text-sm text-gray-600 hover:text-red-600"
+            className="text-sm hover:underline" style={{ color: 'var(--text-secondary)' }}
           >
             Empty cart
           </button>
         </div>
 
-        <aside className="bg-white border border-gray-200 rounded-lg p-4 space-y-4 h-fit">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+        <aside className="glass-card p-4 space-y-4 h-fit">
+          <h2 className="text-sm font-semibold uppercase tracking-wide" style={{ color: 'var(--text-tertiary)' }}>
             Per-merchant breakdown
           </h2>
           <div className="space-y-2">
             {cart.merchant_totals.map((m) => (
               <div key={m.merchant_slug || m.merchant} className="flex items-center justify-between text-sm">
-                <span className="text-gray-700">
-                  {m.merchant} <span className="text-gray-400 text-xs">({m.item_count})</span>
+                <span style={{ color: 'var(--text-secondary)' }}>
+                  {m.merchant} <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>({m.item_count})</span>
                 </span>
-                <span className="font-semibold text-gray-900">{formatKES(m.total)}</span>
+                <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{formatKES(m.total)}</span>
               </div>
             ))}
           </div>
 
-          <div className="border-t border-gray-200 pt-3 flex justify-between items-center">
-            <span className="font-medium text-gray-900">Grand total</span>
-            <span className="text-lg font-bold text-blue-600">{formatKES(cart.total)}</span>
+          <div className="glass-divider"></div>
+          <div className="pt-1 flex justify-between items-center">
+            <span className="font-medium" style={{ color: 'var(--text-primary)' }}>Grand total</span>
+            <span className="text-lg font-bold" style={{ color: 'var(--color-primary)' }}>{formatKES(cart.total)}</span>
           </div>
           {cart.savings_vs_worst_split > 0 && (
-            <div className="bg-green-50 border border-green-200 rounded p-2 text-xs text-green-800">
+            <div className="badge-green rounded-[var(--r-md)] p-2 text-xs">
               Picking the cheapest offer per item saves you{' '}
               <span className="font-semibold">{formatKES(cart.savings_vs_worst_split)}</span>
               {' '}vs. worst-case single-merchant.

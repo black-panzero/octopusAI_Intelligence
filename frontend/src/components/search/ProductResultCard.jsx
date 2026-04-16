@@ -80,9 +80,10 @@ const ProductResultCard = ({ result }) => {
 
   return (
     <div
-      className={`bg-white rounded-lg shadow-sm border p-5 transition-shadow hover:shadow-md ${
-        compareSelected ? 'border-indigo-400 ring-2 ring-indigo-200' : 'border-gray-200'
+      className={`glass-card p-5 transition-shadow hover:shadow-lg ${
+        compareSelected ? 'ring-2' : ''
       }`}
+      style={compareSelected ? { borderColor: 'var(--color-purple)', boxShadow: '0 0 0 2px var(--color-purple-soft)' } : {}}
     >
       <div className="flex items-start gap-4 mb-3">
         {/* Product thumbnail with a graceful placeholder */}
@@ -91,11 +92,11 @@ const ProductResultCard = ({ result }) => {
             src={product.image_url}
             alt=""
             loading="lazy"
-            className="w-16 h-16 rounded-md object-cover bg-gray-100 flex-shrink-0 border border-gray-100"
+            className="w-16 h-16 rounded-[var(--r-md)] object-cover glass-light flex-shrink-0 glass-border"
             onError={(e) => { e.currentTarget.style.visibility = 'hidden'; }}
           />
         ) : (
-          <div className="w-16 h-16 rounded-md bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-400 flex-shrink-0">
+          <div className="w-16 h-16 rounded-[var(--r-md)] glass-light flex items-center justify-center flex-shrink-0" style={{ color: 'var(--text-tertiary)' }}>
             <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5"
                 d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -106,20 +107,20 @@ const ProductResultCard = ({ result }) => {
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">
+              <h3 className="text-lg font-semibold line-clamp-2" style={{ color: 'var(--text-primary)' }}>
                 {product.display_name}
               </h3>
-              <p className="text-xs text-gray-500 truncate">{meta || '—'}</p>
+              <p className="text-xs truncate" style={{ color: 'var(--text-tertiary)' }}>{meta || '—'}</p>
               {product.rating != null && (
-                <p className="text-xs text-amber-600 mt-1">
+                <p className="text-xs mt-1" style={{ color: 'var(--color-amber)' }}>
                   {formatRating(product.rating, product.review_count)}
                 </p>
               )}
             </div>
             <div className="text-right flex-shrink-0">
-              <p className="text-xl font-bold text-blue-600">{formatKES(min_price)}</p>
+              <p className="text-xl font-bold" style={{ color: 'var(--color-primary)' }}>{formatKES(min_price)}</p>
               {hasSavings && (
-                <p className="text-xs text-gray-500 line-through">{formatKES(max_price)}</p>
+                <p className="text-xs line-through" style={{ color: 'var(--text-tertiary)' }}>{formatKES(max_price)}</p>
               )}
             </div>
           </div>
@@ -127,13 +128,13 @@ const ProductResultCard = ({ result }) => {
       </div>
 
       {hasSavings && (
-        <div className="inline-flex items-center gap-2 bg-green-50 border border-green-200 text-green-800 rounded-md px-2 py-1 text-xs font-medium mb-3">
-          <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500" />
+        <div className="inline-flex items-center gap-2 badge-green rounded-[var(--r-md)] px-2 py-1 text-xs font-medium mb-3">
+          <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ background: 'var(--color-green)' }} />
           Save {formatKES(max_price - min_price)} ({savings_pct.toFixed(0)}%) — cheapest at {best_merchant}
         </div>
       )}
 
-      <div className="divide-y divide-gray-100 border border-gray-100 rounded-md mb-3">
+      <div className="glass-border rounded-[var(--r-md)] mb-3 overflow-hidden">
         {offers.map((offer, idx) => {
           const isBest = offer.price === min_price;
           const isBusy = busyOffer === offer.merchant_slug;
@@ -141,30 +142,31 @@ const ProductResultCard = ({ result }) => {
             <div
               key={`${offer.merchant_slug}-${idx}`}
               className={`flex items-center justify-between gap-2 px-3 py-2 text-sm ${
-                isBest ? 'bg-green-50' : ''
+                idx > 0 ? 'glass-border-t' : ''
               }`}
+              style={isBest ? { background: 'var(--color-green-soft)' } : {}}
             >
               <div className="flex items-center gap-2 min-w-0">
-                <span className={`font-medium ${isBest ? 'text-green-900' : 'text-gray-900'}`}>
+                <span className="font-medium" style={{ color: isBest ? 'var(--color-green)' : 'var(--text-primary)' }}>
                   {offer.merchant}
                 </span>
                 {isBest && (
-                  <span className="text-[10px] uppercase tracking-wide bg-green-600 text-white rounded px-1.5 py-0.5">
+                  <span className="text-[10px] uppercase tracking-wide badge-green rounded px-1.5 py-0.5 font-semibold">
                     Best
                   </span>
                 )}
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
-                <span className={`font-semibold ${isBest ? 'text-green-700' : 'text-gray-700'}`}>
+                <span className="font-semibold" style={{ color: isBest ? 'var(--color-green)' : 'var(--text-secondary)' }}>
                   {formatKES(offer.price)}
                 </span>
                 <button
                   onClick={() => handleAdd(offer)}
                   disabled={isBusy}
-                  className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-md ${
+                  className={`glass-btn inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 ${
                     isBusy
-                      ? 'bg-gray-200 text-gray-500'
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                      ? 'opacity-40 cursor-not-allowed glass-btn-ghost'
+                      : 'glass-btn-primary'
                   }`}
                 >
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -178,7 +180,8 @@ const ProductResultCard = ({ result }) => {
                     href={offer.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-blue-600 hover:text-blue-800"
+                    className="text-xs"
+                    style={{ color: 'var(--color-primary)' }}
                     title="Open merchant page"
                   >
                     ↗
@@ -193,26 +196,26 @@ const ProductResultCard = ({ result }) => {
       <div className="flex items-center justify-between gap-2">
         <button
           onClick={handleCompare}
-          className={`text-xs font-medium px-2 py-1 rounded-md border ${
+          className={`glass-btn text-xs font-medium px-2 py-1 ${
             compareSelected
-              ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-              : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+              ? 'badge-purple glass-border'
+              : 'glass-btn-ghost'
           }`}
         >
           {compareSelected ? '✓ Selected to compare' : '+ Compare'}
         </button>
         <button
           onClick={() => setTrackOpen((v) => !v)}
-          className="text-xs font-medium text-emerald-700 hover:text-emerald-900"
+          className="text-xs font-medium" style={{ color: 'var(--color-green)' }}
         >
           {trackOpen ? '✕ Cancel tracking' : '★ Track price'}
         </button>
       </div>
 
       {trackOpen && (
-        <form onSubmit={handleTrack} className="mt-3 bg-emerald-50 border border-emerald-200 rounded-md p-3 space-y-2">
+        <form onSubmit={handleTrack} className="mt-3 glass-card p-3 space-y-2" style={{ background: 'var(--color-green-soft)' }}>
           <div className="grid grid-cols-2 gap-2">
-            <label className="text-xs text-emerald-900">
+            <label className="text-xs" style={{ color: 'var(--color-green)' }}>
               Target price (KES)
               <input
                 type="number"
@@ -220,15 +223,15 @@ const ProductResultCard = ({ result }) => {
                 step="1"
                 value={targetPrice}
                 onChange={(e) => setTargetPrice(e.target.value)}
-                className="mt-1 w-full px-2 py-1 border border-emerald-300 rounded focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="glass-input mt-1 w-full px-2 py-1"
               />
             </label>
-            <label className="text-xs text-emerald-900">
+            <label className="text-xs" style={{ color: 'var(--color-green)' }}>
               Action
               <select
                 value={trackAction}
                 onChange={(e) => setTrackAction(e.target.value)}
-                className="mt-1 w-full px-2 py-1 border border-emerald-300 rounded focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="glass-input mt-1 w-full px-2 py-1"
               >
                 <option value="alert">Alert me</option>
                 <option value="add_to_cart">Auto add to cart</option>
@@ -238,8 +241,8 @@ const ProductResultCard = ({ result }) => {
           <button
             type="submit"
             disabled={tracking}
-            className={`w-full text-sm font-medium py-2 rounded ${
-              tracking ? 'bg-emerald-300 text-white' : 'bg-emerald-600 text-white hover:bg-emerald-700'
+            className={`glass-btn w-full text-sm font-medium py-2 ${
+              tracking ? 'opacity-40 cursor-not-allowed glass-btn-ghost' : 'glass-btn-brand'
             }`}
           >
             {tracking ? 'Saving…' : 'Save rule'}

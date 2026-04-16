@@ -82,7 +82,7 @@ const DealForm = ({ onSubmit, onCancel, isLoading = false }) => {
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Product Name */}
       <div>
-        <label htmlFor="product_name" className="block text-sm font-medium text-gray-700 mb-2">
+        <label htmlFor="product_name" className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
           Product Name *
         </label>
         <input
@@ -91,18 +91,19 @@ const DealForm = ({ onSubmit, onCancel, isLoading = false }) => {
           name="product_name"
           value={formData.product_name}
           onChange={handleInputChange}
-          className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-            errors.product_name ? 'border-red-300 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'
+          className={`glass-input w-full px-3 py-2 ${
+            errors.product_name ? 'border-[var(--color-red)]' : ''
           }`}
+          style={errors.product_name ? { borderColor: 'var(--color-red)' } : {}}
           placeholder="e.g. Rice 5kg Pishori"
         />
-        {errors.product_name && <p className="mt-1 text-sm text-red-600">{errors.product_name}</p>}
+        {errors.product_name && <p className="mt-1 text-sm" style={{ color: 'var(--color-red)' }}>{errors.product_name}</p>}
       </div>
 
       {/* Price + Discount */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="price" className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
             Price (KES) *
           </label>
           <input
@@ -113,16 +114,15 @@ const DealForm = ({ onSubmit, onCancel, isLoading = false }) => {
             onChange={handleInputChange}
             step="1"
             min="0"
-            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              errors.price ? 'border-red-300 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'
-            }`}
+            className="glass-input w-full px-3 py-2"
+            style={errors.price ? { borderColor: 'var(--color-red)' } : {}}
             placeholder="0"
           />
-          {errors.price && <p className="mt-1 text-sm text-red-600">{errors.price}</p>}
+          {errors.price && <p className="mt-1 text-sm" style={{ color: 'var(--color-red)' }}>{errors.price}</p>}
         </div>
 
         <div>
-          <label htmlFor="discount" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="discount" className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
             Discount (% or KES)
           </label>
           <input
@@ -133,19 +133,18 @@ const DealForm = ({ onSubmit, onCancel, isLoading = false }) => {
             onChange={handleInputChange}
             step="0.1"
             min="0"
-            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              errors.discount ? 'border-red-300 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'
-            }`}
+            className="glass-input w-full px-3 py-2"
+            style={errors.discount ? { borderColor: 'var(--color-red)' } : {}}
             placeholder="0 – 100 is treated as %"
           />
-          {errors.discount && <p className="mt-1 text-sm text-red-600">{errors.discount}</p>}
+          {errors.discount && <p className="mt-1 text-sm" style={{ color: 'var(--color-red)' }}>{errors.discount}</p>}
         </div>
       </div>
 
       {/* Merchant + Category */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label htmlFor="merchant" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="merchant" className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
             Merchant *
           </label>
           <select
@@ -153,20 +152,19 @@ const DealForm = ({ onSubmit, onCancel, isLoading = false }) => {
             name="merchant"
             value={formData.merchant}
             onChange={handleInputChange}
-            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              errors.merchant ? 'border-red-300 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'
-            }`}
+            className="glass-input w-full px-3 py-2"
+            style={errors.merchant ? { borderColor: 'var(--color-red)' } : {}}
           >
             <option value="">Select a merchant</option>
             {KENYA_MERCHANTS.map((m) => (
               <option key={m} value={m}>{m}</option>
             ))}
           </select>
-          {errors.merchant && <p className="mt-1 text-sm text-red-600">{errors.merchant}</p>}
+          {errors.merchant && <p className="mt-1 text-sm" style={{ color: 'var(--color-red)' }}>{errors.merchant}</p>}
         </div>
 
         <div>
-          <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="category" className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
             Category
           </label>
           <select
@@ -174,7 +172,7 @@ const DealForm = ({ onSubmit, onCancel, isLoading = false }) => {
             name="category"
             value={formData.category}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="glass-input w-full px-3 py-2"
           >
             <option value="">Select a category</option>
             {DEAL_CATEGORIES.map((c) => (
@@ -187,7 +185,7 @@ const DealForm = ({ onSubmit, onCancel, isLoading = false }) => {
       {/* URL + Expiry */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label htmlFor="original_url" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="original_url" className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
             Source URL
           </label>
           <input
@@ -196,16 +194,15 @@ const DealForm = ({ onSubmit, onCancel, isLoading = false }) => {
             name="original_url"
             value={formData.original_url}
             onChange={handleInputChange}
-            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              errors.original_url ? 'border-red-300 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'
-            }`}
+            className="glass-input w-full px-3 py-2"
+            style={errors.original_url ? { borderColor: 'var(--color-red)' } : {}}
             placeholder="https://naivas.online/product/..."
           />
-          {errors.original_url && <p className="mt-1 text-sm text-red-600">{errors.original_url}</p>}
+          {errors.original_url && <p className="mt-1 text-sm" style={{ color: 'var(--color-red)' }}>{errors.original_url}</p>}
         </div>
 
         <div>
-          <label htmlFor="expiry" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="expiry" className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
             Expires
           </label>
           <input
@@ -214,17 +211,16 @@ const DealForm = ({ onSubmit, onCancel, isLoading = false }) => {
             name="expiry"
             value={formData.expiry}
             onChange={handleInputChange}
-            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              errors.expiry ? 'border-red-300 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'
-            }`}
+            className="glass-input w-full px-3 py-2"
+            style={errors.expiry ? { borderColor: 'var(--color-red)' } : {}}
           />
-          {errors.expiry && <p className="mt-1 text-sm text-red-600">{errors.expiry}</p>}
+          {errors.expiry && <p className="mt-1 text-sm" style={{ color: 'var(--color-red)' }}>{errors.expiry}</p>}
         </div>
       </div>
 
       {/* Description */}
       <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+        <label htmlFor="description" className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
           Description
         </label>
         <textarea
@@ -233,25 +229,26 @@ const DealForm = ({ onSubmit, onCancel, isLoading = false }) => {
           value={formData.description}
           onChange={handleInputChange}
           rows={4}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="glass-input w-full px-3 py-2"
           placeholder="Optional"
         />
       </div>
 
       {/* Actions */}
-      <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+      <div className="glass-divider"></div>
+      <div className="flex justify-end space-x-3 pt-2">
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          className="glass-btn glass-btn-ghost px-4 py-2 text-sm font-medium"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={isLoading}
-          className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
-            isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+          className={`glass-btn px-4 py-2 text-sm font-medium ${
+            isLoading ? 'opacity-40 cursor-not-allowed glass-btn-ghost' : 'glass-btn-primary'
           }`}
         >
           {isLoading ? 'Creating…' : 'Create Deal'}

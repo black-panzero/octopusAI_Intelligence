@@ -98,9 +98,9 @@ const SearchView = () => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg shadow-lg p-6 text-white">
+      <div className="glass-card p-6 text-white" style={{ background: 'var(--brand-gradient)' }}>
         <h1 className="text-2xl font-bold mb-2">Compare Prices</h1>
-        <p className="text-blue-100">
+        <p style={{ color: 'rgba(255,255,255,0.85)' }}>
           One query, every merchant. Cached results are instant — toggle{' '}
           <span className="font-semibold">Live</span> or hit{' '}
           <span className="font-semibold">Refresh live</span> to scrape Naivas,
@@ -115,10 +115,10 @@ const SearchView = () => {
             value={query}
             onChange={handleChange}
             placeholder="Search for rice, oil, milk…"
-            className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="glass-input w-full pl-10 pr-3 py-3"
           />
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="h-5 w-5" style={{ color: 'var(--text-tertiary)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
@@ -126,7 +126,7 @@ const SearchView = () => {
         </div>
         <button
           type="submit"
-          className="px-4 py-3 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          className="glass-btn glass-btn-primary px-4 py-3 font-medium"
         >
           Search
         </button>
@@ -134,11 +134,12 @@ const SearchView = () => {
           type="button"
           onClick={handleRefreshLive}
           disabled={refreshing || !query.trim()}
-          className={`inline-flex items-center gap-1.5 px-4 py-3 rounded-md font-medium ${
+          className={`glass-btn inline-flex items-center gap-1.5 px-4 py-3 font-medium ${
             refreshing || !query.trim()
-              ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-              : 'bg-fuchsia-600 text-white hover:bg-fuchsia-700'
+              ? 'opacity-40 cursor-not-allowed glass-btn-ghost'
+              : 'text-white'
           }`}
+          style={!(refreshing || !query.trim()) ? { background: 'var(--color-fuchsia)' } : {}}
           title="Scrape live merchants and refresh results"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -150,21 +151,22 @@ const SearchView = () => {
       </form>
 
       <div className="flex flex-wrap items-center gap-3 text-sm">
-        <label className="inline-flex items-center gap-1.5 text-gray-700">
+        <label className="inline-flex items-center gap-1.5" style={{ color: 'var(--text-secondary)' }}>
           <input
             type="checkbox"
             checked={live}
             onChange={(e) => setLive(e.target.checked)}
-            className="rounded border-gray-300 text-fuchsia-600 focus:ring-fuchsia-500"
+            className="rounded"
+            style={{ accentColor: 'var(--color-fuchsia)' }}
           />
           <span>Always hit live merchants</span>
         </label>
-        <span className="text-gray-500">Try:</span>
+        <span style={{ color: 'var(--text-tertiary)' }}>Try:</span>
         {SAMPLE_QUERIES.map((q) => (
           <button
             key={q}
             onClick={() => handleSample(q)}
-            className="text-sm px-3 py-1 rounded-full bg-gray-100 text-gray-700 hover:bg-blue-100 hover:text-blue-800"
+            className="glass-btn glass-btn-surface text-sm px-3 py-1 rounded-full"
           >
             {q}
           </button>
@@ -179,7 +181,7 @@ const SearchView = () => {
         const offersTotal = ok.reduce((acc, s) => acc + (s.count || 0), 0);
 
         return (
-          <div className="bg-fuchsia-50 border border-fuchsia-200 rounded-md p-3 text-xs text-fuchsia-900">
+          <div className="glass-card p-3 text-xs" style={{ background: 'var(--color-purple-soft)', color: 'var(--color-purple)' }}>
             <div className="flex items-center justify-between mb-1.5">
               <p className="font-semibold">
                 {okCount > 0
@@ -187,7 +189,7 @@ const SearchView = () => {
                   : `Swept ${total} Kenyan stores · nothing new surfaced`}
               </p>
               {scrapeSummary.cached && (
-                <span className="text-[10px] uppercase tracking-wide bg-fuchsia-100 px-1.5 py-0.5 rounded">
+                <span className="text-[10px] uppercase tracking-wide badge-purple px-1.5 py-0.5 rounded">
                   Cached
                 </span>
               )}
@@ -198,9 +200,10 @@ const SearchView = () => {
                   key={s.slug}
                   className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] ${
                     s.ok
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-gray-100 text-gray-500'
+                      ? 'badge-green'
+                      : 'glass-subtle'
                   }`}
+                  style={!s.ok ? { color: 'var(--text-tertiary)' } : {}}
                   title={s.ok ? `${s.count} offers` : 'Quiet this round'}
                 >
                   {s.slug.replace(/_/g, ' ')}{s.ok ? ` · ${s.count}` : ''}
@@ -212,20 +215,20 @@ const SearchView = () => {
       })()}
 
       {loading && (
-        <div className="flex items-center gap-2 text-gray-600">
-          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600" />
+        <div className="flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}>
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2" style={{ borderColor: 'var(--color-primary)' }} />
           <span className="text-sm">Searching merchants…</span>
         </div>
       )}
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-md p-3 text-sm text-red-700">
+        <div className="glass-card p-3 text-sm" style={{ background: 'var(--color-red-soft)', borderColor: 'var(--color-red)', color: 'var(--color-red)' }}>
           {error}
         </div>
       )}
 
       {!loading && count !== null && (
-        <p className="text-sm text-gray-600">
+        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
           {count === 0
             ? <>No results for <span className="font-medium">"{query}"</span>. Try <b>Refresh live</b>.</>
             : <>{count} matching product{count === 1 ? '' : 's'} across merchants</>}
@@ -239,20 +242,20 @@ const SearchView = () => {
       </div>
 
       {count === null && !loading && !error && (
-        <div className="bg-white border border-dashed border-gray-300 rounded-lg p-8 text-center text-gray-500">
+        <div className="glass-card p-8 text-center" style={{ borderStyle: 'dashed', color: 'var(--text-tertiary)' }}>
           <p className="text-sm">Type a query above or pick a sample to see cross-merchant prices.</p>
         </div>
       )}
 
       {compareItems.length > 0 && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-gray-900 text-white rounded-full shadow-xl px-4 py-2 flex items-center gap-3">
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 glass-heavy glass-border glass-shadow-lg rounded-full px-4 py-2 flex items-center gap-3" style={{ color: 'var(--text-primary)' }}>
           <span className="text-sm">{compareItems.length} selected</span>
           <div className="flex items-center gap-1">
             {compareItems.map((r) => (
               <button
                 key={r.product.id}
                 onClick={() => removeCompare(r.product.id)}
-                className="text-[10px] bg-white/10 hover:bg-white/20 rounded-full px-2 py-0.5"
+                className="text-[10px] glass-subtle rounded-full px-2 py-0.5"
               >
                 {r.product.display_name.slice(0, 20)} ✕
               </button>
@@ -261,13 +264,13 @@ const SearchView = () => {
           <button
             onClick={openCompare}
             disabled={compareItems.length < 2}
-            className={`text-sm font-semibold px-3 py-1 rounded-full ${
-              compareItems.length < 2 ? 'bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-indigo-500 hover:bg-indigo-600'
+            className={`glass-btn text-sm font-semibold px-3 py-1 rounded-full ${
+              compareItems.length < 2 ? 'opacity-40 cursor-not-allowed glass-btn-ghost' : 'glass-btn-brand'
             }`}
           >
             Compare →
           </button>
-          <button onClick={clearCompare} className="text-xs text-gray-300 hover:text-white">Clear</button>
+          <button onClick={clearCompare} className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Clear</button>
         </div>
       )}
 

@@ -9,16 +9,16 @@ import { extractErrorMessage } from '../../lib/errors';
 
 const Stat = ({ label, value, accent = 'blue' }) => {
   const accents = {
-    blue:   'text-blue-600',
-    green:  'text-green-600',
-    purple: 'text-purple-600',
-    orange: 'text-orange-600',
-    rose:   'text-rose-600',
+    blue:   'var(--color-primary)',
+    green:  'var(--color-green)',
+    purple: 'var(--color-purple)',
+    orange: 'var(--color-amber)',
+    rose:   'var(--color-red)',
   };
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4">
-      <p className="text-[11px] uppercase tracking-wide text-gray-500 font-semibold">{label}</p>
-      <p className={`text-2xl font-bold mt-1 ${accents[accent] || accents.blue}`}>
+    <div className="glass-card p-4">
+      <p className="text-[11px] uppercase tracking-wide font-semibold" style={{ color: 'var(--text-tertiary)' }}>{label}</p>
+      <p className="text-2xl font-bold mt-1" style={{ color: accents[accent] || accents.blue }}>
         {(Number(value) || 0).toLocaleString('en-KE')}
       </p>
     </div>
@@ -42,15 +42,15 @@ const StatsBlock = ({ stats }) => {
         <Stat label="Rules"        value={stats.rules}        accent="rose" />
         <Stat label="Conversations" value={stats.conversations} accent="green" />
       </div>
-      <div className="bg-white border border-gray-200 rounded-lg p-4 mt-3 flex items-center justify-between">
+      <div className="glass-card p-4 mt-3 flex items-center justify-between">
         <div>
-          <p className="text-sm font-semibold text-gray-900">Image coverage</p>
-          <p className="text-xs text-gray-500">
+          <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Image coverage</p>
+          <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
             {stats.products_with_image} of {stats.products} products have an image ({coverage}%).
           </p>
         </div>
-        <div className="w-40 h-2 bg-gray-100 rounded-full overflow-hidden">
-          <div className="h-full bg-green-500 rounded-full transition-all" style={{ width: `${coverage}%` }} />
+        <div className="w-40 h-2 glass-light rounded-full overflow-hidden">
+          <div className="h-full rounded-full transition-all" style={{ width: `${coverage}%`, background: 'var(--color-green)' }} />
         </div>
       </div>
     </>
@@ -58,30 +58,30 @@ const StatsBlock = ({ stats }) => {
 };
 
 const MerchantsTable = ({ rows }) => (
-  <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+  <div className="glass-card overflow-hidden">
     <table className="min-w-full text-sm">
-      <thead className="bg-gray-50">
-        <tr>
-          <th className="text-left px-3 py-2 text-xs font-semibold text-gray-600">Slug</th>
-          <th className="text-left px-3 py-2 text-xs font-semibold text-gray-600">Name</th>
-          <th className="text-left px-3 py-2 text-xs font-semibold text-gray-600">Base URL</th>
-          <th className="text-right px-3 py-2 text-xs font-semibold text-gray-600">Snapshots</th>
+      <thead>
+        <tr className="glass-light">
+          <th className="text-left px-3 py-2 text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Slug</th>
+          <th className="text-left px-3 py-2 text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Name</th>
+          <th className="text-left px-3 py-2 text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Base URL</th>
+          <th className="text-right px-3 py-2 text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Snapshots</th>
         </tr>
       </thead>
       <tbody>
         {rows.map((m) => (
-          <tr key={m.id} className="border-t border-gray-100">
-            <td className="px-3 py-2 text-gray-500 font-mono text-xs">{m.slug}</td>
-            <td className="px-3 py-2 font-medium text-gray-900">{m.name}</td>
+          <tr key={m.id} className="glass-border-t">
+            <td className="px-3 py-2 font-mono text-xs" style={{ color: 'var(--text-tertiary)' }}>{m.slug}</td>
+            <td className="px-3 py-2 font-medium" style={{ color: 'var(--text-primary)' }}>{m.name}</td>
             <td className="px-3 py-2">
               {m.base_url && (
                 <a href={m.base_url} target="_blank" rel="noopener noreferrer"
-                   className="text-blue-600 hover:text-blue-800 text-xs truncate max-w-xs inline-block">
+                   className="text-xs truncate max-w-xs inline-block" style={{ color: 'var(--color-primary)' }}>
                   {m.base_url}
                 </a>
               )}
             </td>
-            <td className="px-3 py-2 text-right text-gray-700">{m.snapshot_count.toLocaleString('en-KE')}</td>
+            <td className="px-3 py-2 text-right" style={{ color: 'var(--text-secondary)' }}>{m.snapshot_count.toLocaleString('en-KE')}</td>
           </tr>
         ))}
       </tbody>
@@ -92,31 +92,31 @@ const MerchantsTable = ({ rows }) => (
 const ProductRow = ({ product, onOpen }) => (
   <button
     onClick={() => onOpen(product)}
-    className="w-full text-left border-t border-gray-100 hover:bg-gray-50 grid grid-cols-12 gap-2 items-center p-2"
+    className="w-full text-left glass-border-t glass-hover grid grid-cols-12 gap-2 items-center p-2"
   >
     <div className="col-span-1">
       {product.image_url ? (
         <img src={product.image_url} alt=""
-             className="w-10 h-10 object-cover rounded bg-gray-100"
+             className="w-10 h-10 object-cover rounded-[var(--r-sm)] glass-light"
              loading="lazy"
              onError={(e) => { e.currentTarget.style.visibility = 'hidden'; }} />
       ) : (
-        <div className="w-10 h-10 bg-gray-100 rounded" />
+        <div className="w-10 h-10 glass-light rounded-[var(--r-sm)]" />
       )}
     </div>
     <div className="col-span-5 min-w-0">
-      <p className="text-sm text-gray-900 truncate">{product.display_name}</p>
-      <p className="text-[11px] text-gray-500 truncate">
-        {[product.brand, product.category, product.size].filter(Boolean).join(' • ')}
+      <p className="text-sm truncate" style={{ color: 'var(--text-primary)' }}>{product.display_name}</p>
+      <p className="text-[11px] truncate" style={{ color: 'var(--text-tertiary)' }}>
+        {[product.brand, product.category, product.size].filter(Boolean).join(' · ')}
       </p>
     </div>
-    <div className="col-span-2 text-xs text-gray-600 truncate">
+    <div className="col-span-2 text-xs truncate" style={{ color: 'var(--text-secondary)' }}>
       {product.rating != null ? `★ ${product.rating} (${product.review_count ?? 0})` : '—'}
     </div>
-    <div className="col-span-2 text-xs text-gray-500 truncate">
+    <div className="col-span-2 text-xs truncate" style={{ color: 'var(--text-tertiary)' }}>
       {product.specs_keys.length ? `${product.specs_keys.length} specs` : '—'}
     </div>
-    <div className="col-span-2 text-xs text-gray-500 truncate text-right">
+    <div className="col-span-2 text-xs truncate text-right" style={{ color: 'var(--text-tertiary)' }}>
       {formatDate(product.updated_at)}
     </div>
   </button>
@@ -124,34 +124,35 @@ const ProductRow = ({ product, onOpen }) => (
 
 const SnapshotsPane = ({ product, snapshots, onClose }) => (
   <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
-    <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[80vh] overflow-hidden flex flex-col"
+    <div className="glass-card glass-shadow-lg max-w-3xl w-full max-h-[80vh] overflow-hidden flex flex-col"
+         style={{ background: 'var(--glass-bg-solid)' }}
          onClick={(e) => e.stopPropagation()}>
-      <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+      <div className="p-4 glass-border-b flex items-center justify-between">
         <div className="min-w-0">
-          <p className="text-xs text-gray-500">Product</p>
-          <p className="text-lg font-semibold text-gray-900 truncate">{product.display_name}</p>
+          <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Product</p>
+          <p className="text-lg font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{product.display_name}</p>
         </div>
-        <button onClick={onClose} className="text-gray-500 hover:text-gray-900">✕</button>
+        <button onClick={onClose} style={{ color: 'var(--text-tertiary)' }}>✕</button>
       </div>
-      <div className="overflow-auto flex-1">
+      <div className="overflow-auto flex-1 glass-scroll">
         <table className="min-w-full text-sm">
-          <thead className="bg-gray-50 sticky top-0">
+          <thead className="glass-light sticky top-0">
             <tr>
-              <th className="text-left px-3 py-2 text-xs font-semibold text-gray-600">Merchant</th>
-              <th className="text-right px-3 py-2 text-xs font-semibold text-gray-600">Price</th>
-              <th className="text-left px-3 py-2 text-xs font-semibold text-gray-600">Captured</th>
-              <th className="text-left px-3 py-2 text-xs font-semibold text-gray-600">URL</th>
+              <th className="text-left px-3 py-2 text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Merchant</th>
+              <th className="text-right px-3 py-2 text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Price</th>
+              <th className="text-left px-3 py-2 text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Captured</th>
+              <th className="text-left px-3 py-2 text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>URL</th>
             </tr>
           </thead>
           <tbody>
             {snapshots.map((s) => (
-              <tr key={s.id} className="border-t border-gray-100">
-                <td className="px-3 py-2 font-medium text-gray-900">{s.merchant}</td>
-                <td className="px-3 py-2 text-right font-mono text-gray-800">{formatKES(s.price)}</td>
-                <td className="px-3 py-2 text-xs text-gray-500">{formatDate(s.captured_at, { dateStyle: 'medium', timeStyle: 'short' })}</td>
+              <tr key={s.id} className="glass-border-t">
+                <td className="px-3 py-2 font-medium" style={{ color: 'var(--text-primary)' }}>{s.merchant}</td>
+                <td className="px-3 py-2 text-right font-mono" style={{ color: 'var(--text-primary)' }}>{formatKES(s.price)}</td>
+                <td className="px-3 py-2 text-xs" style={{ color: 'var(--text-tertiary)' }}>{formatDate(s.captured_at, { dateStyle: 'medium', timeStyle: 'short' })}</td>
                 <td className="px-3 py-2 text-xs">
                   {s.url && (
-                    <a href={s.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 truncate max-w-xs inline-block">
+                    <a href={s.url} target="_blank" rel="noopener noreferrer" className="truncate max-w-xs inline-block" style={{ color: 'var(--color-primary)' }}>
                       {s.url}
                     </a>
                   )}
@@ -159,7 +160,7 @@ const SnapshotsPane = ({ product, snapshots, onClose }) => (
               </tr>
             ))}
             {snapshots.length === 0 && (
-              <tr><td colSpan={4} className="px-3 py-6 text-center text-gray-500">No snapshots captured yet.</td></tr>
+              <tr><td colSpan={4} className="px-3 py-6 text-center" style={{ color: 'var(--text-tertiary)' }}>No snapshots captured yet.</td></tr>
             )}
           </tbody>
         </table>
@@ -245,9 +246,9 @@ const AdminView = () => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-lg shadow-lg p-6 text-white">
+      <div className="glass-card p-6 text-white" style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #2d2d4e 100%)' }}>
         <h1 className="text-2xl font-bold mb-1">Admin</h1>
-        <p className="text-slate-300 text-sm">
+        <p className="text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>
           Catalog inspection and control. Use with care — actions here hit real merchants.
         </p>
       </div>
@@ -257,8 +258,8 @@ const AdminView = () => {
           <button
             key={s}
             onClick={() => setSection(s)}
-            className={`text-sm px-3 py-1.5 rounded-full capitalize ${
-              section === s ? 'bg-slate-900 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            className={`glass-btn text-sm px-3 py-1.5 rounded-full capitalize ${
+              section === s ? 'glass-btn-primary' : 'glass-btn-surface'
             }`}
           >
             {s}
@@ -277,23 +278,23 @@ const AdminView = () => {
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Search name / brand…"
-              className="flex-1 min-w-[200px] px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-slate-600"
+              className="glass-input flex-1 min-w-[200px] px-3 py-2 text-sm"
             />
-            <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+            <label className="inline-flex items-center gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
               <input type="checkbox" checked={missingImage}
                      onChange={(e) => setMissingImage(e.target.checked)}
                      className="rounded" />
               Missing image only
             </label>
-            <span className="text-xs text-gray-500 ml-auto">{products.total.toLocaleString('en-KE')} total</span>
+            <span className="text-xs ml-auto" style={{ color: 'var(--text-tertiary)' }}>{products.total.toLocaleString('en-KE')} total</span>
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+          <div className="glass-card overflow-hidden">
             {(products.items || []).map((p) => (
               <ProductRow key={p.id} product={p} onOpen={handleOpen} />
             ))}
             {products.items.length === 0 && (
-              <p className="p-6 text-center text-sm text-gray-500">No products.</p>
+              <p className="p-6 text-center text-sm" style={{ color: 'var(--text-tertiary)' }}>No products.</p>
             )}
           </div>
 
@@ -302,15 +303,15 @@ const AdminView = () => {
               <button
                 onClick={() => loadProducts(Math.max(1, products.page - 1))}
                 disabled={products.page <= 1}
-                className="text-xs px-3 py-1 rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-40"
+                className="glass-btn glass-btn-ghost text-xs px-3 py-1"
               >← Prev</button>
-              <span className="text-xs text-gray-500 self-center">
+              <span className="text-xs self-center" style={{ color: 'var(--text-tertiary)' }}>
                 Page {products.page} / {Math.ceil(products.total / products.size)}
               </span>
               <button
                 onClick={() => loadProducts(products.page + 1)}
                 disabled={products.page * products.size >= products.total}
-                className="text-xs px-3 py-1 rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-40"
+                className="glass-btn glass-btn-ghost text-xs px-3 py-1"
               >Next →</button>
             </div>
           )}
@@ -319,35 +320,35 @@ const AdminView = () => {
 
       {section === 'operations' && (
         <div className="space-y-4">
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <h2 className="text-sm font-semibold text-gray-900 mb-2">Manual scrape</h2>
+          <div className="glass-card p-4">
+            <h2 className="text-sm font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Manual scrape</h2>
             <form onSubmit={handleScrape} className="flex gap-2">
               <input
                 value={scrapeQ}
                 onChange={(e) => setScrapeQ(e.target.value)}
                 placeholder="e.g. rice, samsung, cooking oil"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-slate-600"
+                className="glass-input flex-1 px-3 py-2 text-sm"
               />
               <button type="submit" disabled={busy || !scrapeQ.trim()}
-                      className={`px-3 py-2 rounded-md text-sm font-medium text-white ${
-                        busy || !scrapeQ.trim() ? 'bg-gray-400 cursor-not-allowed' : 'bg-slate-900 hover:bg-slate-800'
+                      className={`glass-btn px-3 py-2 text-sm font-medium ${
+                        busy || !scrapeQ.trim() ? 'opacity-40 cursor-not-allowed glass-btn-ghost' : 'glass-btn-primary'
                       }`}>
                 {busy ? 'Running…' : 'Sweep all stores'}
               </button>
             </form>
-            <p className="text-[11px] text-gray-500 mt-2">
+            <p className="text-[11px] mt-2" style={{ color: 'var(--text-tertiary)' }}>
               Forces a live scrape across every registered merchant, bypassing the 10-minute cache.
             </p>
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <h2 className="text-sm font-semibold text-gray-900 mb-2">Backfill product images</h2>
-            <p className="text-xs text-gray-500 mb-2">
+          <div className="glass-card p-4">
+            <h2 className="text-sm font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Backfill product images</h2>
+            <p className="text-xs mb-2" style={{ color: 'var(--text-tertiary)' }}>
               Resolves {stats?.products - stats?.products_with_image || 0} product{(stats?.products ?? 0) - (stats?.products_with_image ?? 0) === 1 ? '' : 's'} that are missing images. The scheduler also runs this every 5 minutes automatically.
             </p>
             <button onClick={handleResolveImages} disabled={busy}
-                    className={`text-sm font-medium px-3 py-2 rounded-md ${
-                      busy ? 'bg-gray-200 text-gray-500' : 'bg-slate-900 text-white hover:bg-slate-800'
+                    className={`glass-btn text-sm font-medium px-3 py-2 ${
+                      busy ? 'opacity-40 cursor-not-allowed glass-btn-ghost' : 'glass-btn-primary'
                     }`}>
               {busy ? 'Working…' : 'Run one batch'}
             </button>
