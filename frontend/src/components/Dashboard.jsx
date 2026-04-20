@@ -1,27 +1,155 @@
 // src/components/Dashboard.jsx
-import React, { useState, useEffect } from 'react';
-import { dealsApi } from '../api';
+import React, { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
+import { dealsApi, recommendationsApi } from '../api';
+import { useCartStore } from '../stores/cartStore';
+import { formatKES, formatDate, computeDiscount, formatRating } from '../lib/format';
+import { extractErrorMessage } from '../lib/errors';
 
-const Dashboard = () => {
+const StatTile = ({ name, value, icon, color, description }) => {
+  const badgeClass = {
+    blue:   'badge-blue',
+    green:  'badge-green',
+    purple: 'badge-purple',
+    orange: 'badge-amber',
+  }[color] || 'badge-blue';
+  return (
+    <div className="glass-card p-6 hover:shadow-lg transition-shadow duration-200">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>{name}</p>
+          <p className="text-3xl font-bold mt-2" style={{ color: 'var(--text-primary)' }}>
+            {Number(value).toLocaleString('en-KE')}
+          </p>
+          <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>{description}</p>
+        </div>
+        <div className={`p-3 rounded-full text-2xl ${badgeClass}`}>{icon}</div>
+      </div>
+    </div>
+  );
+};
+
+const BestDealCard = ({ deal, onAdd }) => (
+  <div className="glass-card p-3 hover:shadow-lg transition-shadow">
+    <div className="flex items-start justify-between gap-2 mb-2">
+      <div className="min-w-0">
+        <p className="font-semibold text-sm truncate" style={{ color: 'var(--text-primary)' }}>{deal.product.display_name}</p>
+        <p className="text-[11px] truncate" style={{ color: 'var(--text-tertiary)' }}>
+          {[deal.product.brand, deal.product.category, deal.product.size].filter(Boolean).join(' · ')}
+        </p>
+      </div>
+      <span className="text-[10px] uppercase tracking-wide rounded px-1.5 py-0.5 badge-green font-semibold">
+        -{deal.savings_pct.toFixed(0)}%
+      </span>
+    </div>
+    <div className="flex items-baseline gap-2 mb-2">
+      <span className="text-lg font-bold" style={{ color: 'var(--color-primary)' }}>{formatKES(deal.min_price)}</span>
+      <span className="text-xs line-through" style={{ color: 'var(--text-tertiary)' }}>{formatKES(deal.max_price)}</span>
+    </div>
+    <p className="text-[11px] mb-2 truncate" style={{ color: 'var(--text-secondary)' }}>
+      Cheapest at <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{deal.best_merchant}</span>
+      {' · '}{deal.offer_count} merchants
+    </p>
+    <button
+      onClick={() => onAdd?.(deal)}
+      className="glass-btn glass-btn-primary w-full text-xs font-semibold px-2 py-1.5"
+    >
+      + Add cheapest
+    </button>
+  </div>
+);
+
+const PriceDropCard = ({ drop, onAdd }) => (
+  <div className="glass-card p-3 hover:shadow-lg transition-shadow">
+    <div className="flex items-start justify-between gap-2 mb-2">
+      <div className="min-w-0">
+        <p className="font-semibold text-sm truncate" style={{ color: 'var(--text-primary)' }}>{drop.product.display_name}</p>
+        <p className="text-[11px] truncate" style={{ color: 'var(--text-tertiary)' }}>
+          {drop.merchant} · {formatDate(drop.observed_at)}
+        </p>
+      </div>
+      <span className="text-[10px] uppercase tracking-wide badge-red rounded px-1.5 py-0.5 font-semibold">
+        ↓ {drop.drop_pct.toFixed(0)}%
+      </span>
+    </div>
+    <div className="flex items-baseline gap-2 mb-2">
+      <span className="text-lg font-bold" style={{ color: 'var(--color-red)' }}>{formatKES(drop.current_price)}</span>
+      <span className="text-xs line-through" style={{ color: 'var(--text-tertiary)' }}>{formatKES(drop.previous_price)}</span>
+    </div>
+    <button
+      onClick={() => onAdd?.(drop)}
+      className="glass-btn w-full text-xs font-semibold px-2 py-1.5 text-white"
+      style={{ background: 'var(--color-red)' }}
+    >
+      + Add to cart
+    </button>
+  </div>
+);
+
+const TopRatedCard = ({ item, onAdd }) => (
+  <div className="glass-card p-3 hover:shadow-lg transition-shadow">
+    <p className="font-semibold text-sm truncate" style={{ color: 'var(--text-primary)' }}>{item.product.display_name}</p>
+    <p className="text-[11px] truncate" style={{ color: 'var(--text-tertiary)' }}>
+      {[item.product.brand, item.product.category].filter(Boolean).join(' · ')}
+    </p>
+    <p className="text-xs mt-1" style={{ color: 'var(--color-amber)' }}>
+      {formatRating(item.product.rating, item.product.review_count)}
+    </p>
+    <div className="flex items-baseline justify-between mt-2">
+      {item.min_price != null && <span className="text-sm font-bold" style={{ color: 'var(--color-primary)' }}>{formatKES(item.min_price)}</span>}
+      {item.merchant && <span className="text-[10px] truncate max-w-[100px]" style={{ color: 'var(--text-tertiary)' }}>@ {item.merchant}</span>}
+    </div>
+    {item.merchant_id && item.product?.id && (
+      <button
+        onClick={() => onAdd?.(item)}
+        className="glass-btn mt-2 w-full text-xs font-semibold px-2 py-1.5 text-white"
+        style={{ background: 'var(--color-amber)' }}
+      >
+        + Add
+      </button>
+    )}
+  </div>
+);
+
+const Dashboard = ({ onNavigate }) => {
   const [stats, setStats] = useState(null);
+  const [recs, setRecs] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const addToCart = useCartStore((s) => s.add);
 
-  useEffect(() => {
-    fetchStats();
-  }, []);
-
-  const fetchStats = async () => {
+  const fetchAll = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await dealsApi.getDealStats();
-      setStats(data);
+      const [s, r] = await Promise.all([
+        dealsApi.getDealStats(),
+        recommendationsApi.get().catch(() => null),
+      ]);
+      setStats(s);
+      setRecs(r);
     } catch (err) {
-      setError('Failed to load dashboard statistics');
-      console.error('Error fetching stats:', err);
+      setError(extractErrorMessage(err, 'Failed to load dashboard'));
     } finally {
       setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchAll(); }, []);
+
+  const handleAdd = async (row) => {
+    const product_id = row.product?.id;
+    const merchant_id = row.merchant_id
+      || (row.offers && row.offers[0]?.merchant_id);
+    if (!product_id || !merchant_id) {
+      toast.error('This recommendation is missing a merchant id — refresh.');
+      return;
+    }
+    try {
+      await addToCart({ product_id, merchant_id, quantity: 1 });
+      toast.success(`Added ${row.product.display_name}`);
+    } catch (err) {
+      toast.error(extractErrorMessage(err, 'Could not add to cart'));
     }
   };
 
@@ -29,11 +157,11 @@ const Dashboard = () => {
     return (
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[...Array(4)].map((_, index) => (
-            <div key={index} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="glass-card p-6">
               <div className="animate-pulse">
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+                <div className="h-4 rounded w-3/4 mb-2" style={{ background: 'var(--glass-bg-light)' }}></div>
+                <div className="h-8 rounded w-1/2" style={{ background: 'var(--glass-bg-light)' }}></div>
               </div>
             </div>
           ))}
@@ -44,172 +172,114 @@ const Dashboard = () => {
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-        <div className="flex items-center">
-          <div className="flex-shrink-0">
-            <svg className="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <div className="ml-3">
-            <h3 className="text-sm font-medium text-red-800">Error Loading Dashboard</h3>
-            <p className="text-sm text-red-700 mt-1">{error}</p>
-          </div>
-          <div className="ml-auto">
-            <button
-              onClick={fetchStats}
-              className="px-3 py-2 text-sm font-medium text-red-800 hover:bg-red-100 rounded-md"
-            >
-              Retry
-            </button>
-          </div>
+      <div className="glass-card p-6 flex items-center" style={{ background: 'var(--color-red-soft)', borderColor: 'var(--color-red)' }}>
+        <div className="flex-1">
+          <h3 className="text-sm font-medium" style={{ color: 'var(--color-red)' }}>Error Loading Dashboard</h3>
+          <p className="text-sm mt-1" style={{ color: 'var(--color-red)' }}>{error}</p>
         </div>
+        <button onClick={fetchAll} className="glass-btn glass-btn-ghost px-3 py-2 text-sm font-medium" style={{ color: 'var(--color-red)' }}>
+          Retry
+        </button>
       </div>
     );
   }
 
-  const statCards = [
-    {
-      name: 'Total Deals',
-      value: stats?.total_deals || 0,
-      icon: '📦',
-      color: 'blue',
-      description: 'All deals in system'
-    },
-    {
-      name: 'Active Deals',
-      value: stats?.active_deals || 0,
-      icon: '✅',
-      color: 'green',
-      description: 'Currently available'
-    },
-    {
-      name: 'Merchants',
-      value: stats?.unique_merchants || 0,
-      icon: '🏪',
-      color: 'purple',
-      description: 'Partner stores'
-    },
-    {
-      name: 'Categories',
-      value: stats?.unique_categories || 0,
-      icon: '📂',
-      color: 'orange',
-      description: 'Product types'
-    }
-  ];
+  const recent = Array.isArray(stats?.recent_deals) ? stats.recent_deals : [];
+  const bestDeals = recs?.best_deals || [];
+  const priceDrops = recs?.price_drops || [];
+  const topRated = recs?.top_rated || [];
 
-  const getColorClasses = (color) => {
-    const colorMap = {
-      blue: 'bg-blue-50 text-blue-600 border-blue-200',
-      green: 'bg-green-50 text-green-600 border-green-200',
-      purple: 'bg-purple-50 text-purple-600 border-purple-200',
-      orange: 'bg-orange-50 text-orange-600 border-orange-200'
-    };
-    return colorMap[color] || colorMap.blue;
-  };
+  const statCards = [
+    { name: 'Total Deals',  value: stats?.total_deals       ?? 0, icon: '📦', color: 'blue',   description: 'All deals in system' },
+    { name: 'Active Deals', value: stats?.active_deals      ?? 0, icon: '✅', color: 'green',  description: 'Currently available' },
+    { name: 'Merchants',    value: stats?.unique_merchants  ?? 0, icon: '🏪', color: 'purple', description: 'Partner stores' },
+    { name: 'Categories',   value: stats?.unique_categories ?? 0, icon: '📂', color: 'orange', description: 'Product types' },
+  ];
 
   return (
     <div className="space-y-6">
-      {/* Welcome Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg shadow-lg p-6 text-white">
-        <h1 className="text-2xl font-bold mb-2">Welcome to SmartBuy Dashboard</h1>
-        <p className="text-blue-100">
-          Monitor your deals, track performance, and manage your marketplace efficiently.
-        </p>
-      </div>
-
-      {/* Statistics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {statCards.map((stat) => (
-          <div key={stat.name} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">{stat.name}</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">
-                  {stat.value.toLocaleString()}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">{stat.description}</p>
-              </div>
-              <div className={`p-3 rounded-full text-2xl ${getColorClasses(stat.color)}`}>
-                {stat.icon}
-              </div>
-            </div>
+      <div className="glass-card p-6 text-white" style={{ background: 'var(--brand-gradient)' }}>
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="text-2xl font-bold mb-2">Welcome to SmartBuy</h1>
+            <p style={{ color: 'rgba(255,255,255,0.85)' }}>
+              Compare deals across Kenyan merchants. Track prices. Save more.
+            </p>
           </div>
-        ))}
-      </div>
-
-      {/* Quick Actions */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Quick Actions buttons unchanged */}
-          <button className="flex items-center p-4 border border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors duration-200 group">
-            <div className="flex-shrink-0">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200">
-                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-              </div>
-            </div>
-            <div className="ml-3 text-left">
-              <p className="text-sm font-medium text-gray-900">Add New Deal</p>
-              <p className="text-xs text-gray-500">Create a new deal listing</p>
-            </div>
-          </button>
-
-          <button className="flex items-center p-4 border border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition-colors duration-200 group">
-            <div className="flex-shrink-0">
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200">
-                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </div>
-            </div>
-            <div className="ml-3 text-left">
-              <p className="text-sm font-medium text-gray-900">View Analytics</p>
-              <p className="text-xs text-gray-500">Detailed performance metrics</p>
-            </div>
-          </button>
-
-          <button className="flex items-center p-4 border border-gray-300 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors duration-200 group">
-            <div className="flex-shrink-0">
-              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200">
-                <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </div>
-            </div>
-            <div className="ml-3 text-left">
-              <p className="text-sm font-medium text-gray-900">Settings</p>
-              <p className="text-xs text-gray-500">Configure preferences</p>
-            </div>
+          <button
+            onClick={() => onNavigate?.('search')}
+            className="glass-btn glass-btn-surface inline-flex items-center gap-2 font-semibold px-4 py-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            Compare Prices
           </button>
         </div>
       </div>
 
-      {/* Recent Activity */}
-      {stats?.recent_deals && stats.recent_deals.length > 0 && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Deals</h2>
-          <div className="space-y-3">
-            {stats.recent_deals.slice(0, 5).map((deal) => (
-              <div key={deal.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900 truncate">{deal.product_name}</p>
-                  <p className="text-sm text-gray-500">{deal.merchant} • {deal.category}</p>
-                </div>
-                <div className="text-right ml-4">
-                  <p className="font-semibold text-blue-600">
-                    ${deal.price.toFixed(2)}
-                  </p>
-                  <p className={`text-xs ${deal.is_active ? 'text-green-600' : 'text-red-600'}`}>
-                    {deal.is_active ? 'Active' : 'Inactive'}
-                  </p>
-                </div>
-              </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {statCards.map((s) => <StatTile key={s.name} {...s} />)}
+      </div>
+
+      {bestDeals.length > 0 && (
+        <section>
+          <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>🔥 Best deals right now</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {bestDeals.map((d) => (
+              <BestDealCard key={d.product.id} deal={d} onAdd={handleAdd} />
             ))}
+          </div>
+        </section>
+      )}
+
+      {priceDrops.length > 0 && (
+        <section>
+          <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>↓ Recent price drops</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {priceDrops.map((d, i) => (
+              <PriceDropCard key={`${d.product.id}-${i}`} drop={d} onAdd={handleAdd} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {topRated.length > 0 && (
+        <section>
+          <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>⭐ Top-rated products</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {topRated.map((t) => (
+              <TopRatedCard key={t.product.id} item={t} onAdd={handleAdd} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {recent.length > 0 && (
+        <div className="glass-card p-6">
+          <h2 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>Recent Deals</h2>
+          <div className="space-y-3">
+            {recent.slice(0, 5).map((deal) => {
+              const { final, savings } = computeDiscount(deal.price, deal.discount);
+              const show = savings > 0 ? final : deal.price;
+              return (
+                <div key={deal.id} className="flex items-center justify-between p-3 glass-light rounded-[var(--r-md)]">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate" style={{ color: 'var(--text-primary)' }}>{deal.product_name}</p>
+                    <p className="text-sm truncate" style={{ color: 'var(--text-tertiary)' }}>
+                      {deal.merchant}{deal.category ? ` · ${deal.category}` : ''} · {formatDate(deal.created_at)}
+                    </p>
+                  </div>
+                  <div className="text-right ml-4">
+                    <p className="font-semibold" style={{ color: 'var(--color-primary)' }}>{formatKES(show)}</p>
+                    <p className="text-xs" style={{ color: deal.is_active ? 'var(--color-green)' : 'var(--color-red)' }}>
+                      {deal.is_active ? 'Active' : 'Inactive'}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

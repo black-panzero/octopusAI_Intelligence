@@ -1,5 +1,6 @@
 // src/components/deals/DealFilters.jsx
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
+import { KENYA_MERCHANTS, DEAL_CATEGORIES } from '../../lib/format';
 
 const DealFilters = ({ onFiltersChange, loading = false }) => {
   const [filters, setFilters] = useState({
@@ -8,75 +9,48 @@ const DealFilters = ({ onFiltersChange, loading = false }) => {
     category: '',
     minPrice: '',
     maxPrice: '',
-    isActive: 'all'
+    isActive: 'all',
   });
 
-  const categories = [
-    'Electronics',
-    'Fashion', 
-    'Home & Garden',
-    'Health & Beauty',
-    'Sports & Outdoors',
-    'Books',
-    'Toys',
-    'Food & Beverages',
-    'Other'
-  ];
+  // useRef replaces the fragile window.searchTimeout from before.
+  const searchTimer = useRef(null);
 
-  const merchants = [
-    'Amazon',
-    'eBay', 
-    'Walmart',
-    'Target',
-    'Best Buy',
-    'Jumia',
-    'Other'
-  ];
+  const emit = (next) => onFiltersChange?.(next);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    const newFilters = {
-      ...filters,
-      [name]: value
-    };
-    setFilters(newFilters);
-    
-    // Debounce the API call for search input
+    const next = { ...filters, [name]: value };
+    setFilters(next);
+
     if (name === 'search') {
-      clearTimeout(window.searchTimeout);
-      window.searchTimeout = setTimeout(() => {
-        onFiltersChange(newFilters);
-      }, 500);
+      if (searchTimer.current) clearTimeout(searchTimer.current);
+      searchTimer.current = setTimeout(() => emit(next), 500);
     } else {
-      onFiltersChange(newFilters);
+      emit(next);
     }
   };
 
   const handleClearFilters = () => {
-    const clearedFilters = {
-      search: '',
-      merchant: '',
-      category: '',
-      minPrice: '',
-      maxPrice: '',
-      isActive: 'all'
+    const cleared = {
+      search: '', merchant: '', category: '',
+      minPrice: '', maxPrice: '', isActive: 'all',
     };
-    setFilters(clearedFilters);
-    onFiltersChange(clearedFilters);
+    setFilters(cleared);
+    emit(cleared);
   };
 
-  const hasActiveFilters = Object.values(filters).some(value => 
-    value !== '' && value !== 'all'
+  const hasActiveFilters = Object.values(filters).some(
+    (v) => v !== '' && v !== 'all',
   );
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <div className="glass-card p-6 mb-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-medium text-gray-900">Filter Deals</h3>
+        <h3 className="text-lg font-medium" style={{ color: 'var(--text-primary)' }}>Filter Deals</h3>
         {hasActiveFilters && (
           <button
             onClick={handleClearFilters}
-            className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+            className="text-sm font-medium" style={{ color: 'var(--color-primary)' }}
           >
             Clear All
           </button>
@@ -84,9 +58,8 @@ const DealFilters = ({ onFiltersChange, loading = false }) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-        {/* Search */}
         <div className="col-span-full md:col-span-2">
-          <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="search" className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
             Search Products
           </label>
           <div className="relative">
@@ -96,20 +69,19 @@ const DealFilters = ({ onFiltersChange, loading = false }) => {
               name="search"
               value={filters.search}
               onChange={handleInputChange}
-              placeholder="Search by product name..."
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Search by product name…"
+              className="glass-input w-full pl-10 pr-3 py-2"
             />
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="h-5 w-5" style={{ color: 'var(--text-tertiary)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
           </div>
         </div>
 
-        {/* Merchant Filter */}
         <div>
-          <label htmlFor="merchant" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="merchant" className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
             Merchant
           </label>
           <select
@@ -117,20 +89,17 @@ const DealFilters = ({ onFiltersChange, loading = false }) => {
             name="merchant"
             value={filters.merchant}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="glass-input w-full px-3 py-2"
           >
             <option value="">All Merchants</option>
-            {merchants.map((merchant) => (
-              <option key={merchant} value={merchant}>
-                {merchant}
-              </option>
+            {KENYA_MERCHANTS.map((m) => (
+              <option key={m} value={m}>{m}</option>
             ))}
           </select>
         </div>
 
-        {/* Category Filter */}
         <div>
-          <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="category" className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
             Category
           </label>
           <select
@@ -138,21 +107,18 @@ const DealFilters = ({ onFiltersChange, loading = false }) => {
             name="category"
             value={filters.category}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="glass-input w-full px-3 py-2"
           >
             <option value="">All Categories</option>
-            {categories.map((category) => (
-              <option key={category} value={category}>
-                {category}
-              </option>
+            {DEAL_CATEGORIES.map((c) => (
+              <option key={c} value={c}>{c}</option>
             ))}
           </select>
         </div>
 
-        {/* Price Range */}
         <div>
-          <label htmlFor="minPrice" className="block text-sm font-medium text-gray-700 mb-2">
-            Min Price
+          <label htmlFor="minPrice" className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+            Min Price (KES)
           </label>
           <input
             type="number"
@@ -162,14 +128,14 @@ const DealFilters = ({ onFiltersChange, loading = false }) => {
             onChange={handleInputChange}
             placeholder="0"
             min="0"
-            step="0.01"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            step="1"
+            className="glass-input w-full px-3 py-2"
           />
         </div>
 
         <div>
-          <label htmlFor="maxPrice" className="block text-sm font-medium text-gray-700 mb-2">
-            Max Price
+          <label htmlFor="maxPrice" className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+            Max Price (KES)
           </label>
           <input
             type="number"
@@ -177,16 +143,15 @@ const DealFilters = ({ onFiltersChange, loading = false }) => {
             name="maxPrice"
             value={filters.maxPrice}
             onChange={handleInputChange}
-            placeholder="999+"
+            placeholder="Any"
             min="0"
-            step="0.01"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            step="1"
+            className="glass-input w-full px-3 py-2"
           />
         </div>
 
-        {/* Status Filter */}
         <div>
-          <label htmlFor="isActive" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="isActive" className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
             Status
           </label>
           <select
@@ -194,7 +159,7 @@ const DealFilters = ({ onFiltersChange, loading = false }) => {
             name="isActive"
             value={filters.isActive}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="glass-input w-full px-3 py-2"
           >
             <option value="all">All Deals</option>
             <option value="true">Active Only</option>
@@ -203,88 +168,12 @@ const DealFilters = ({ onFiltersChange, loading = false }) => {
         </div>
       </div>
 
-      {/* Active Filters Display */}
-      {hasActiveFilters && (
-        <div className="mt-4 pt-4 border-t border-gray-200">
-          <div className="flex flex-wrap gap-2">
-            <span className="text-sm text-gray-600 mr-2">Active filters:</span>
-            {filters.search && (
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                Search: "{filters.search}"
-                <button
-                  onClick={() => handleInputChange({ target: { name: 'search', value: '' } })}
-                  className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full text-blue-400 hover:bg-blue-200 hover:text-blue-600"
-                >
-                  <svg className="w-2 h-2" stroke="currentColor" fill="none" viewBox="0 0 8 8">
-                    <path strokeLinecap="round" d="m1 1 6 6m0-6-6 6" />
-                  </svg>
-                </button>
-              </span>
-            )}
-            {filters.merchant && (
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                Merchant: {filters.merchant}
-                <button
-                  onClick={() => handleInputChange({ target: { name: 'merchant', value: '' } })}
-                  className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full text-green-400 hover:bg-green-200 hover:text-green-600"
-                >
-                  <svg className="w-2 h-2" stroke="currentColor" fill="none" viewBox="0 0 8 8">
-                    <path strokeLinecap="round" d="m1 1 6 6m0-6-6 6" />
-                  </svg>
-                </button>
-              </span>
-            )}
-            {filters.category && (
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                Category: {filters.category}
-                <button
-                  onClick={() => handleInputChange({ target: { name: 'category', value: '' } })}
-                  className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full text-purple-400 hover:bg-purple-200 hover:text-purple-600"
-                >
-                  <svg className="w-2 h-2" stroke="currentColor" fill="none" viewBox="0 0 8 8">
-                    <path strokeLinecap="round" d="m1 1 6 6m0-6-6 6" />
-                  </svg>
-                </button>
-              </span>
-            )}
-            {(filters.minPrice || filters.maxPrice) && (
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                Price: {filters.minPrice || '0'} - {filters.maxPrice || '∞'}
-                <button
-                  onClick={() => {
-                    handleInputChange({ target: { name: 'minPrice', value: '' } });
-                    handleInputChange({ target: { name: 'maxPrice', value: '' } });
-                  }}
-                  className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full text-orange-400 hover:bg-orange-200 hover:text-orange-600"
-                >
-                  <svg className="w-2 h-2" stroke="currentColor" fill="none" viewBox="0 0 8 8">
-                    <path strokeLinecap="round" d="m1 1 6 6m0-6-6 6" />
-                  </svg>
-                </button>
-              </span>
-            )}
-            {filters.isActive !== 'all' && (
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                Status: {filters.isActive === 'true' ? 'Active' : 'Inactive'}
-                <button
-                  onClick={() => handleInputChange({ target: { name: 'isActive', value: 'all' } })}
-                  className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600"
-                >
-                  <svg className="w-2 h-2" stroke="currentColor" fill="none" viewBox="0 0 8 8">
-                    <path strokeLinecap="round" d="m1 1 6 6m0-6-6 6" />
-                  </svg>
-                </button>
-              </span>
-            )}
-          </div>
-        </div>
-      )}
-
       {loading && (
-        <div className="mt-4 pt-4 border-t border-gray-200">
+        <div className="mt-4 pt-4">
+          <div className="glass-divider mb-4"></div>
           <div className="flex items-center justify-center">
-            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-            <span className="ml-2 text-sm text-gray-600">Filtering deals...</span>
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2" style={{ borderColor: 'var(--color-primary)' }}></div>
+            <span className="ml-2 text-sm" style={{ color: 'var(--text-secondary)' }}>Filtering deals…</span>
           </div>
         </div>
       )}
